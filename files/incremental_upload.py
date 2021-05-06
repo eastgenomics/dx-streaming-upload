@@ -396,7 +396,7 @@ def main():
     # While loop waiting for RTAComplete.txt or RTAComplete.xml
     while not os.path.isfile(os.path.join(args.run_dir, "RTAComplete.txt")) and \
         not os.path.isfile(os.path.join(args.run_dir, "RTAComplete.xml")) and \
-        (not args.novaseq or not os.path.isfile(os.path.join(args.run_dir, "CopyComplete.txt"))):
+        not os.path.isfile(os.path.join(args.run_dir, "CopyComplete.txt")):
         start_time=time.time()
         run_time = start_time - initial_start_time
         # Fail if run time exceeds total time to wait

@@ -196,6 +196,7 @@ def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=Fal
     for run_folder in run_folders:
         folder_path = os.path.join(base_dir, run_folder)
         run_info_path = os.path.join(folder_path, 'RunInfo.xml')
+
         if not os.path.isfile(run_info_path):
             # Not a run_folder
                 not_run_folders.append(run_folder)
@@ -203,7 +204,8 @@ def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=Fal
             # Is a RUN folder
             if os.path.isfile(os.path.join(folder_path, 'RTAComplete.txt')) or \
                 os.path.isfile(os.path.join(folder_path, 'RTAComplete.xml')) or \
-                (novaseq and os.path.isfile(os.path.join(folder_path, 'CopyComplete.txt'))):
+                os.path.isfile(os.path.join(folder_path, 'CopyComplete.txt')):
+
                 # Is a completed RUN folder
                 completed_runs.append(run_folder)
             else:
@@ -216,7 +218,6 @@ def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=Fal
                     if DEBUG: print "==DEBUG== run folder {0} was created on {1}; "\
                     "it is determined to be STALE and will NOT be uploaded.".format(run_folder,
                         time.strftime("%Z - %Y/%m/%d, %H:%M:%S", time.localtime(created_time)))
-
                     stale_runs.append(run_folder)
                 else:
                     # Ongoing run

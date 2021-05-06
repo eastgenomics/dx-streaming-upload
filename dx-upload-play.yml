@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  vars:
+    monitored_users:
+      - username: 
+        sequencer: 
+        local_tar_directory: 
+        local_log_directory: 
+        monitored_directories:
+          - 
+    mode: debug
+    upload_project: 
+
+  roles:
+    - dx-streaming-upload
