@@ -5,11 +5,14 @@ import sys
 import os
 import subprocess as sub
 import re
+from tabnanny import check
 import xml.etree.ElementTree as ET
 import time
 import dxpy
 import argparse
 import json
+
+from notify import slack, checkCycles
 
 # Uploads an Illumina run directory (HiSeq 2500, HiSeq X, NextSeq)
 # If for use with a MiSeq, users MUST change the config files to include and NOT specify the -l argument
@@ -230,6 +233,7 @@ def run_command_with_retry(my_num_retries, my_command):
 
 def raise_error(msg):
     print_stderr("ERROR: %s" % msg)
+    slack().send(message=msg)
     sys.exit()
 
 def print_stderr(msg):
@@ -461,6 +465,9 @@ def main():
         record.close()
 
     print_stderr("Run %s successfully streamed!" % (run_id))
+
+    # check if anything failed in sequencing but uploaded
+    checkCycles(run_dir=args.run-dir).check()
 
     downstream_input = {}
     if args.downstream_input:
