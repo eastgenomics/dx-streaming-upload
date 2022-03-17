@@ -26,7 +26,7 @@ class slack():
         self.slack_channel = os.getenv("SLACK_CHANNEL")
 
 
-    def send(self, message):
+    def send(self, message, run):
         """
         Send notification to Slack
 
@@ -34,8 +34,13 @@ class slack():
         ----------
         message : str
             message to send to Slack
+        run : str
+            sequencing run to send notification for
         """
-        message = f"Error in dx-streaming-upload:\n\n{message}"
+        message = (
+            f":warning: Error in dx-streaming-upload:\n\n"
+            f"Run: {run}\n\n{message}"
+        )
         http = requests.Session()
         retries = Retry(total=5, backoff_factor=10, method_whitelist=['POST'])
         http.mount("https://", HTTPAdapter(max_retries=retries))
@@ -43,7 +48,7 @@ class slack():
         response = http.post(
             'https://slack.com/api/chat.postMessage', {
                 'token': self.slack_token,
-                'channel': f'#{self.slack_channel}',
+                'channel': f'{self.slack_channel}',
                 'text': message
             }).json()
 
@@ -52,8 +57,8 @@ class checkCycles():
     """
     dx-streaming-upload can appear to have uploaded everything fine, but
     issues with the sequencer can cause cycles to not complete and an
-    incomplete run uploaded. The total no. reads can be read from {file} and
-    we can check this against the total cycles files written to disk.
+    incomplete run uploaded. The total no. cycles can be read from RunInfo.xml
+    and we can check this against the total cycle dirs written to disk.
     """
     def __init__(self, run_dir) -> None:
         self.run_dir = run_dir
@@ -63,7 +68,23 @@ class checkCycles():
         """
         Call funcions to check logs
         """
-        self.read_runinfo_xml()
+        cycle_count = self.read_runinfo_xml()
+        lanes, max_cycles = self.find_cycle_dirs()
+
+        completed = all([x == cycle_count for x in max_cycles])
+
+        if not completed:
+            # at least one lane not completed all cycles
+            message = f"\n\t".join([
+                f"{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
+            ])
+            message = (
+                f"Total sequencing cycles do not appear to have completed.\n"
+                f"Expected cycles: {cycle_count}\n\n"
+                f"Cycles found:"
+                f"\tLane\t\tCycles\n\n\t{message}"
+            )
+            slack().send(message=message)
 
 
     def read_runinfo_xml(self):
@@ -72,7 +93,8 @@ class checkCycles():
 
         Returns
         -------
-        cycle_counts : int
+        cycle_count : int
+            total cycles to run on sequencer
         """
         runinfo = os.path.join(self.run_dir, "RunInfo.xml")
 
@@ -81,8 +103,34 @@ class checkCycles():
 
         bs_data = bs(contents, 'xml')
         reads = bs_data.find_all('Read')
-        cycle_counts = sum([
+        cycle_count = sum([
             int(x.get('NumCycles')) for x in reads.find_all('Read')
         ])
 
-        return cycle_counts
+        return cycle_count
+
+
+    def find_cycle_dirs(self):
+        """
+        Search the expected cycle dir and check for highest dir written.
+        There should be one dir per cycle, so the highest should match the
+        cycle count in RunInfo.xml
+
+        Returns
+        -------
+        lanes : list
+            list of lanes for given run (i.e [L001, L002...])
+        max_cycles : list
+            list of integers of max cycle dir per lane
+        """
+        lanes = os.listdir(os.path.join(
+            self.run_dir, "/Data/Intensities/BaseCalls/"
+        ))
+
+        lane_dirs = [os.listdir(x) for x in lanes]
+        max_cycles = [sorted(x)[-1] for x in lane_dirs]
+        max_cycles = [
+            int(x.replace('C', '').replace('.1', '')) for x in max_cycles
+        ]
+
+        return lanes, max_cycles
