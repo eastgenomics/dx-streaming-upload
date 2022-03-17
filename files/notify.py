@@ -16,6 +16,7 @@ from urllib3.util import Retry
 
 from bs4 import BeautifulSoup as bs
 
+
 class slack():
     """
     Slack related functions
@@ -52,12 +53,7 @@ class checkCycles():
     dx-streaming-upload can appear to have uploaded everything fine, but
     issues with the sequencer can cause cycles to not complete and an
     incomplete run uploaded. The total no. reads can be read from {file} and
-    we can check this against the total cycles files written to disk
-
-    Parameters
-    ----------
-    run_dir : str
-        current run directory to read logs from
+    we can check this against the total cycles files written to disk.
     """
     def __init__(self, run_dir) -> None:
         self.run_dir = run_dir
@@ -77,14 +73,14 @@ class checkCycles():
         Returns
         -------
         cycle_counts : int
-            
         """
         runinfo = os.path.join(self.run_dir, "RunInfo.xml")
 
         with open(runinfo) as fh:
             contents = fh.read()
 
-        reads = bs.find_all('Read')
+        bs_data = bs(contents, 'xml')
+        reads = bs_data.find_all('Read')
         cycle_counts = sum([
             int(x.get('NumCycles')) for x in reads.find_all('Read')
         ])
