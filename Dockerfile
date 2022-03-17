@@ -13,6 +13,7 @@ RUN cron
 
 RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload
 RUN chown -R 1005 /opt/
+RUN chown -R 1005 /var/lock/
 RUN su - dx-upload
 
 RUN touch /var/run/crond.pid
