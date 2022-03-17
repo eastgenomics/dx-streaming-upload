@@ -98,7 +98,14 @@ def parse_args():
             help="An optional list of regex patterns to exclude.")
     parser.add_argument("-n", "--novaseq", dest="novaseq", action='store_true',
             help="If Novaseq is used, this parameter has to be used.")
-
+    parser.add_argument(
+        "--sequencer_id", default="",
+        help=(
+            "ID of sequencer defined int config, used to keep log and lock "
+            "file unique, and for adding to Slack notifications to know "
+            "which sequencer has an issue if multiple are set up"
+        )
+    )
 
     # Mutually exclusive inputs for verbose loggin (UA) vs dxpy upload
     upload_debug_group = parser.add_mutually_exclusive_group(required=False)
@@ -132,7 +139,10 @@ def parse_args():
 
     # Ensure min < max
     if args.min_size > args.max_size:
-        raise_error("--min-size input must be less than --max-size")
+        raise_error(
+            "--min-size input must be less than --max-size",
+            send=False, sequencer_id=args.sequencer_id
+        )
 
     return args
 
@@ -146,37 +156,57 @@ def check_input(args):
         dxpy.get_handler(args.project).describe()
     except dxpy.exceptions.DXAPIError as e:
         if e.name == "InvalidAuthentication":
-            raise_error("API token (%s) is not valid. %s"
-                    % (args.api_token, e))
+            raise_error(
+                "API token (%s) is not valid. %s" % (args.api_token, e),
+                send=True, sequencer_id=args.sequencer_id
+            )
         if e.name == "PermissionDenied":
-            raise_error("Project (%s) is not valid. %s"
-                    % (args.project, e))
+            raise_error(
+                "Project (%s) is not valid. %s" % (args.project, e),
+                send=True, sequencer_id=args.sequencer_id
+            )
     except dxpy.exceptions.DXError as e:
-        raise_error("Error getting project handler for project (%s). %s" %
-                (args.project, e))
+        raise_error(
+            "Error getting project handler for project (%s). %s" %
+            (args.project, e), send=True, sequencer_id=args.sequencer_id
+        )
 
     # Check that chained downstream applet is valid
     if args.applet:
         try:
             dxpy.get_handler(args.applet).describe()
         except dxpy.exceptions.DXAPIError as e:
-            raise_error("Unable to resolve applet %s. %s" %(args.applet, e))
+            raise_error(
+                "Unable to resolve applet %s. %s" %(args.applet, e),
+                send=True, sequencer_id=args.sequencer_id
+            )
         except dxpy.exceptions.DXError as e:
-            raise_error("Error getting handler for applet (%s). %s" %(args.applet, e))
+            raise_error(
+                "Error getting handler for applet (%s). %s" %(args.applet, e),
+                send=True, sequencer_id=args.sequencer_id
+            )
 
     # Check that chained downstream workflow is valid
     if args.workflow:
         try:
             dxpy.get_handler(args.workflow).describe()
         except dxpy.exceptions.DXAPIError as e:
-            raise_error("Unable to resolve workflow %s. %s" %(args.workflow, e))
+            raise_error(
+                "Unable to resolve workflow %s. %s" %(args.workflow, e),
+                send=True, sequencer_id=args.sequencer_id
+            )
         except dxpy.exceptions.DXError as e:
-            raise_error("Error getting handler for workflow (%s). %s" %(args.workflow, e))
+            raise_error(
+                "Error getting handler for workflow (%s). %s" %(args.workflow, e),
+                send=True, sequencer_id=args.sequencer_id
+            )
 
     # Check that executable to launch locally is executable
     if args.script:
         if not (os.path.isfile(args.script) and os.access(args.script, os.X_OK)):
-            raise_error("Executable/script passed by -s: (%s) is not executable" %(args.script))
+            raise_error(
+                "Executable/script passed by -s: (%s) is not executable" %(args.script)
+            )
 
     if not args.dxpy_upload:
         print_stderr("Checking if ua is in $PATH")
@@ -196,10 +226,14 @@ def check_input(args):
                 "upload from the directory containing incremental_upload.py "+
                 "and dx_sync_directory.py")
 
-def get_run_id(run_dir):
+
+def get_run_id(run_dir, sequencer):
     runinfo_xml = run_dir + "/RunInfo.xml"
     if os.path.isfile(runinfo_xml) == False:
-        raise_error("File RunInfo.xml not found in %s" % (run_dir))
+        raise_error(
+            "File RunInfo.xml not found in %s" % (run_dir),
+            send=True, sequencer_id=sequencer
+        )
     try:
         tree = ET.parse(runinfo_xml)
         root = tree.getroot()
@@ -208,7 +242,11 @@ def get_run_id(run_dir):
         print_stderr("Detected run %s" % (run_id))
         return run_id
     except:
-        raise_error("Could not extract run id from RunInfo.xml")
+        raise_error(
+            "Could not extract run id from RunInfo.xml",
+            send=True, sequencer_id=sequencer
+        )
+
 
 def get_target_folder(base, lane):
     if lane == "all":
@@ -216,7 +254,8 @@ def get_target_folder(base, lane):
     else:
         return base.rstrip("/") + "/" + lane
 
-def run_command_with_retry(my_num_retries, my_command):
+
+def run_command_with_retry(my_num_retries, my_command, sequencer):
     for trys in range(my_num_retries):
         print_stderr("Running (Try %d of %d): %s" %
                 (trys, my_num_retries, my_command))
@@ -229,22 +268,44 @@ def run_command_with_retry(my_num_retries, my_command):
                     (" ".join(my_command), trys))
         time.sleep(10)
 
-    raise_error("Number of retries exceed %d. Please check logs to troubleshoot issues." % my_num_retries)
+    raise_error(
+        "Number of retries exceed %d. Please check logs to troubleshoot issues." % my_num_retries,
+        send=True, sequencer_id=sequencer
+        )
 
-def raise_error(msg):
+
+def raise_error(msg, send=False, sequencer_id=''):
+    """
+    Prints error message and exit, and also optionally send a notification
+    via Slack
+
+    Parameters
+    ----------
+    msg : str
+        error message to print and send
+    send : bool
+        controls if to send Slack notification
+    sequencer_id : str
+        ID of sequencer parsed from config
+    """
     print_stderr("ERROR: %s" % msg)
-    slack().send(message=msg)
+    if send:
+        slack().send(message=msg, run=sequencer_id)
     sys.exit()
+
 
 def print_stderr(msg):
     print ("[incremental_upload.py] %s" % msg, file=sys.stderr)
+
 
 def upload_single_file(filepath, project, folder, properties):
     """ Upload a single file onto DNAnexus, into the project and folder specified,
     and apply the given properties. Returns None if given filepath is invalid or
     an error was thrown during upload"""
     if not os.path.exists(filepath):
-        print_stderr("Invalid filepath given to upload_single_file %s" %filepath)
+        print_stderr(
+            "Invalid filepath given to upload_single_file %s" %filepath
+        )
         return None
 
     try:
@@ -256,7 +317,9 @@ def upload_single_file(filepath, project, folder, properties):
         return f.id
 
     except dxpy. DXError as e:
-        print_stderr("Failed to upload local file %s to %s:%s" %(filepath, project, folder))
+        print_stderr(
+            "Failed to upload local file %s to %s:%s" %(filepath, project, folder),
+        )
         return None
 
 def run_sync_dir(lane, args, finish=False):
@@ -305,7 +368,9 @@ def run_sync_dir(lane, args, finish=False):
         invocation.extend(["--min-age", str(args.min_age)])
     invocation.append(args.run_dir)
 
-    output = run_command_with_retry(args.retries, invocation)
+    output = run_command_with_retry(
+        args.retries, invocation, args.sequencer_id
+    )
     return output.split()
 
 def termination_file_exists(novaseq, run_dir):
@@ -318,7 +383,7 @@ def main():
 
     args = parse_args()
     check_input(args)
-    run_id = get_run_id(args.run_dir)
+    run_id = get_run_id(args.run_dir, args.sequencer_id)
 
     # Set all naming conventions
     REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
@@ -357,9 +422,11 @@ def main():
                     typename="UploadSentinel", name=lane["record_name"],
                     project=args.project, folder=lane["remote_folder"])
         except dxpy.exceptions.DXSearchError as e:
-            raise_error("Encountered an error looking for %s at %s:%s. %s"
-                    % (lane["record_name"], lane["remote_folder"],
-                        args.project, e))
+            raise_error(
+                "Encountered an error looking for %s at %s:%s. %s" % (
+                    lane["record_name"], lane["remote_folder"], args.project, e
+                ), send=True, sequencer_id=args.sequencer_id
+            )
 
         if old_record:
             lane["dxrecord"] = dxpy.get_handler(
@@ -384,7 +451,10 @@ def main():
 
         runInfo = dxpy.find_one_data_object(zero_ok=True, name="RunInfo.xml", project=args.project, folder=lane["remote_folder"])
         if not runInfo:
-            lane["runinfo_file_id"] = upload_single_file(args.run_dir + "/RunInfo.xml", args.project, lane["remote_folder"], properties)
+            lane["runinfo_file_id"] = upload_single_file(
+                args.run_dir + "/RunInfo.xml", args.project,
+                lane["remote_folder"], properties
+            )
         else:
             lane["runinfo_file_id"] = runInfo["id"]
 
@@ -410,8 +480,10 @@ def main():
         run_time = start_time - initial_start_time
         # Fail if run time exceeds total time to wait
         if run_time > seconds_to_wait:
-            print_stderr("EXITING: Upload failed. Run did not complete after %d seconds (max wait = %ds)" %(run_time, seconds_to_wait))
-            sys.exit(1)
+            raise_error(
+                "EXITING: Upload failed. Run did not complete after %d seconds (max wait = %ds)" %(run_time, seconds_to_wait),
+                send=True, sequencer_id=args.sequencer_id
+                )
 
         # Loop through all lanes in run directory
         for lane in lane_info:
@@ -474,7 +546,9 @@ def main():
         try:
             input_dict = json.loads(args.downstream_input)
         except ValueError as e:
-            raise_error("Failed to read downstream input as JSON string. %s. %s" %(args.downstream_input, e))
+            raise_error(
+                "Failed to read downstream input as JSON string. %s. %s" %(args.downstream_input, e),
+            )
 
         if not isinstance(input_dict, dict):
             raise_error("Expected a dict for downstream input. Got %s." %input_dict)
