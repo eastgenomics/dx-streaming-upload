@@ -38,7 +38,8 @@ CONFIG_DEFAULT = {
     "n_seq_intervals": 2,
     "n_upload_threads": 8,
     "downstream_input": '',
-    "n_streaming_threads":1,
+    "n_streaming_threads": 1,
+    "sequencer_id": "",
     "delay_sample_sheet_upload": False,
     "novaseq": False
 }
@@ -56,15 +57,18 @@ RUN_UPLOAD_DEST = "/"
 # run directory tarballs and upload sentinel file are stored
 REMOTE_RUN_FOLDER = "runs"
 
+
 def parse_args():
     """ Parse command line arguments """
-    parser = argparse.ArgumentParser(description='Script to monitor a local directory for new Illumina sequencing RUNS and\n' +
-                                                  'trigger the incremental upload script when a new RUN directory not net synced\n' +
-                                                  'to the DNANexus platform is observed.\n' +
-                                                  'It also re-triggers incremental upload if local log file has not been updated\n' +
-                                                  'for extended period of time.\n' +
-                                                  'This script is intended to be triggered regularly (e.g. as a CRON job)',
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description='Script to monitor a local directory for new Illumina sequencing RUNS and\n' +
+        'trigger the incremental upload script when a new RUN directory not net synced\n' +
+        'to the DNANexus platform is observed.\n' +
+        'It also re-triggers incremental upload if local log file has not been updated\n' +
+        'for extended period of time.\n' +
+        'This script is intended to be triggered regularly (e.g. as a CRON job)',
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     requiredNamed = parser.add_argument_group("Required named arguments")
 
@@ -117,6 +121,7 @@ def parse_args():
         DEBUG = True
     return args
 
+
 def get_dx_auth_token():
     """Parses dx_auth_token from the output of dx env
     Exits with error message if dx env failed to execute
@@ -147,6 +152,7 @@ def get_streaming_config(config_file, project, applet, workflow, script, token):
         config[key] = user_config_dict.get(key, default)
     return config
 
+
 def _transform_to_number(string):
     if type(string) != str:
         return string
@@ -159,10 +165,12 @@ def _transform_to_number(string):
             res = string
     return res
 
+
 def _translate_integers(config):
     for key in config:
         config[key] = _transform_to_number(config[key])
     return config
+
 
 def check_config_fields(config):
     """ Validate the given directory fields in config are valid directories"""
@@ -191,6 +199,7 @@ def check_config_fields(config):
             invalid_config("JSON parse error for downstream input: {0}".format(input_json))
     return config
 
+
 def get_run_folders(base_dir):
     """ Get the local directories within the specified base_dir.
     It does NOT check whether these directories are Illumina directories. This check
@@ -203,6 +212,7 @@ def get_run_folders(base_dir):
     return [dir_name for dir_name in os.listdir(base_dir)
             if os.path.isdir(os.path.join(base_dir, dir_name))
             and not dir_name.startswith(".")]
+
 
 def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=False):
     """ Check local folders to ascertain which are Illumina RUN directories (defined
@@ -278,6 +288,7 @@ def check_dnax_folders(run_folders, project):
     except KeyError as e:
         sys.exit("Unknown exception when fetching folders in {0} of {1}. {2}: {3}.".format(
                   RUN_UPLOAD_DEST, project, e.errno, e.strerror))
+
 
 def find_record(run_name, project):
     """ Wrapper to find the sentinel record for a given run_name in the given
@@ -371,6 +382,7 @@ def _trigger_streaming_upload(folder, config):
                "-D", config['run_length'],
                "-I", config['n_seq_intervals'],
                "-u", config['n_upload_threads'],
+               "-sequencer_id", config['sequencer_id'],
                "--verbose"]
 
     if config['novaseq']:
