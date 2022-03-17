@@ -74,63 +74,63 @@
   become_user: "{{ item.username }}"
 
 - name: Copy necessary config to user's home directory
-  copy: src=../templates/monitor_run_config.template dest=~/dnanexus/config/monitor_runs.config
+  copy: src=../templates/monitor_run_config.template dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
 
 # Edit config file to customize to user-provided parameters
 - name: Change config file's novaseq flag
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^novaseq:.*' line='novaseq: \"{{ item.novaseq }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^novaseq:.*' line='novaseq: \"{{ item.novaseq }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.novaseq is defined
 
 - name: Change config file's local TAR directory
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^tmp_dir:.*' line='tmp_dir: \"{{ item.local_tar_directory }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^tmp_dir:.*' line='tmp_dir: \"{{ item.local_tar_directory }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.local_tar_directory is defined
 
 - name: Change config file's local LOG directory
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^log_dir:.*' line='log_dir: \"{{ item.local_log_directory }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^log_dir:.*' line='log_dir: \"{{ item.local_log_directory }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.local_log_directory is defined
 
 - name: Change config file's local EXCLUDE pattern
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^exclude:.*' line='exclude: \"{{ item.exclude_patterns }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^exclude:.*' line='exclude: \"{{ item.exclude_patterns }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.exclude_patterns is defined
 
 - name: Change anticipated run duration
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^run_length:.*' line='run_length: \"{{ item.run_length }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^run_length:.*' line='run_length: \"{{ item.run_length }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.run_length is defined
 
 - name: Change multiplier of run_times to wait
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^n_seq_intervals:.*' line='n_seq_intervals: \"{{ item.n_seq_intervals }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^n_seq_intervals:.*' line='n_seq_intervals: \"{{ item.n_seq_intervals }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.n_seq_intervals is defined
 
 - name: Change number of retries for incremental_upload
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^n_retries:.*' line='n_retries: \"{{ item.n_retries }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^n_retries:.*' line='n_retries: \"{{ item.n_retries }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.n_retries is defined
 
 - name: Change number of upload threads for UA
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^n_upload_threads:.*' line='n_upload_threads: \"{{ item.n_upload_threads }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^n_upload_threads:.*' line='n_upload_threads: \"{{ item.n_upload_threads }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
@@ -138,7 +138,7 @@
 
 - name: Change specification for downstream input
   lineinfile: # escaping properly is important for this as downstream_input is/can be a JSON obj
-    dest: ~/dnanexus/config/monitor_runs.config
+    dest: ~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config
     regexp: '^downstream_input:.*'
     line: "downstream_input: '{{ item.downstream_input }}'"
   with_items: "{{ monitored_users }}"
@@ -147,35 +147,35 @@
   when: item.downstream_input is defined
 
 - name: Change specification for minimum upload size
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^min_size:.*' line='min_size: \"{{ item.min_size }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^min_size:.*' line='min_size: \"{{ item.min_size }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.min_size is defined
 
 - name: Change specification for maximum upload size
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^max_size:.*' line='max_size: \"{{ item.max_size }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^max_size:.*' line='max_size: \"{{ item.max_size }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.max_size is defined
 
 - name: Change specification for minimum sync interval
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^min_interval:.*' line='min_interval: \"{{ item.min_interval }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^min_interval:.*' line='min_interval: \"{{ item.min_interval }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.min_interval is defined
 
 - name: Change specification for number of concurrent uploads
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^n_streaming_threads:.*' line='n_streaming_threads: \"{{ item.n_streaming_threads }}\"'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^n_streaming_threads:.*' line='n_streaming_threads: \"{{ item.n_streaming_threads }}\"'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
   when: item.n_streaming_threads is defined
 
 - name: Change specification for delaying sample sheet upload
-  lineinfile: "dest=~/dnanexus/config/monitor_runs.config regexp='^delay_sample_sheet_upload:.*' line='delay_sample_sheet_upload: {{ item.delay_sample_sheet_upload }}'"
+  lineinfile: "dest=~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config regexp='^delay_sample_sheet_upload:.*' line='delay_sample_sheet_upload: {{ item.delay_sample_sheet_upload }}'"
   with_items: "{{ monitored_users }}"
   become: yes
   become_user: "{{ item.username }}"
@@ -183,7 +183,8 @@
 
 # Create lock file
 - name: Create lock file for CRON to wait on using flock
-  file: path=/var/lock/dnanexus_uploader.lock state=touch
+  file: path=/var/lock/{{ item.sequencer_id }}_dnanexus_uploader.lock state=touch
+  with_items: "{{ monitored_users  }}"
 
 # Make sure required parameters are defined
 - name: fail when project is not defined
@@ -205,7 +206,7 @@
   cron: >
     name="DNAnexus monitor runs (debug) {{ item.1 }}"
     user="{{ item.0.username }}"
-    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.1 | to_uuid }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.1 | to_uuid }}.log 2>&1' > ~/dx-stream_cron_{{ item.1 | to_uuid }}.log 2>&1"
+    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.sequencer_id }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.sequencer_id }}.log 2>&1' > ~/dx-stream_cron_{{ item.sequencer_id }}.log 2>&1"
   with_subelements:
         - "{{ monitored_users }}"
         - monitored_directories
@@ -219,7 +220,7 @@
     name="DNAnexus monitor runs (deploy) {{ item.1 }}"
     special_time=hourly
     user="{{ item.0.username }}"
-    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.1 | to_uuid }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.1 | to_uuid }}.log 2>&1' > ~/dx-stream_cron_{{ item.1 | to_uuid }}.log 2>&1"
+    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.sequencer_id }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.sequencer_id }}.log 2>&1' > ~/dx-stream_cron_{{ item.sequencer_id }}.log 2>&1"
   with_subelements:
         - "{{ monitored_users }}"
         - monitored_directories
