@@ -62,6 +62,7 @@ class checkCycles():
     """
     def __init__(self, run_dir) -> None:
         self.run_dir = run_dir
+        self.cycle_dir = "/Data/Intensities/BaseCalls/"
 
 
     def check(self) -> None:
@@ -123,9 +124,7 @@ class checkCycles():
         max_cycles : list
             list of integers of max cycle dir per lane
         """
-        lanes = os.listdir(os.path.join(
-            self.run_dir, "/Data/Intensities/BaseCalls/"
-        ))
+        lanes = os.listdir(os.path.join(self.run_dir, self.cycle_dir))
 
         lane_dirs = [os.listdir(x) for x in lanes]
         max_cycles = [sorted(x)[-1] for x in lane_dirs]
