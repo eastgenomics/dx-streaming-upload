@@ -5,7 +5,6 @@ import sys
 import os
 import subprocess as sub
 import re
-from tabnanny import check
 import xml.etree.ElementTree as ET
 import time
 import dxpy

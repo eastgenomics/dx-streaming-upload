@@ -9,8 +9,6 @@ Jethro Rainford
 import os
 import sys
 import requests
-import json
-import dxpy as dx
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
@@ -38,7 +36,7 @@ class slack():
             sequencing run to send notification for
         """
         message = (
-            f":warning: Error in dx-streaming-upload:\n\n"
+            f":warning: *Error in dx-streaming-upload:*\n\n"
             f"Run: {run}\n\n{message}"
         )
         http = requests.Session()
@@ -48,7 +46,7 @@ class slack():
         response = http.post(
             'https://slack.com/api/chat.postMessage', {
                 'token': self.slack_token,
-                'channel': f'{self.slack_channel}',
+                'channel': self.slack_channel,
                 'text': message
             }).json()
 
@@ -62,7 +60,7 @@ class checkCycles():
     """
     def __init__(self, run_dir) -> None:
         self.run_dir = run_dir
-        self.cycle_dir = "/Data/Intensities/BaseCalls/"
+        self.cycle_dir = "Data/Intensities/BaseCalls/"
 
 
     def check(self) -> None:
@@ -77,15 +75,15 @@ class checkCycles():
         if not completed:
             # at least one lane not completed all cycles
             message = f"\n\t".join([
-                f"{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
+                f"\t\t\t\t\t\t{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
             ])
             message = (
                 f"Total sequencing cycles do not appear to have completed.\n"
-                f"Expected cycles: {cycle_count}\n\n"
+                f"Expected cycles: *{cycle_count}*\n\n"
                 f"Cycles found:"
                 f"\tLane\t\tCycles\n\n\t{message}"
             )
-            slack().send(message=message)
+            slack().send(message=message, run=self.run_dir)
 
 
     def read_runinfo_xml(self):
@@ -95,7 +93,7 @@ class checkCycles():
         Returns
         -------
         cycle_count : int
-            total cycles to run on sequencer
+            total cycles expected to run on sequencer
         """
         runinfo = os.path.join(self.run_dir, "RunInfo.xml")
 
@@ -104,9 +102,7 @@ class checkCycles():
 
         bs_data = bs(contents, 'xml')
         reads = bs_data.find_all('Read')
-        cycle_count = sum([
-            int(x.get('NumCycles')) for x in reads.find_all('Read')
-        ])
+        cycle_count = sum([int(x.get('NumCycles')) for x in reads])
 
         return cycle_count
 
@@ -124,10 +120,12 @@ class checkCycles():
         max_cycles : list
             list of integers of max cycle dir per lane
         """
-        lanes = os.listdir(os.path.join(self.run_dir, self.cycle_dir))
+        cycle_path = os.path.join(self.run_dir, self.cycle_dir)
+        lanes = sorted(os.listdir(cycle_path))
 
-        lane_dirs = [os.listdir(x) for x in lanes]
-        max_cycles = [sorted(x)[-1] for x in lane_dirs]
+        lane_dirs = [os.listdir(os.path.join(cycle_path, x)) for x in lanes]
+
+        max_cycles = [sorted(x)[-1] for x in lane_dirs]  # get highest cycle
         max_cycles = [
             int(x.replace('C', '').replace('.1', '')) for x in max_cycles
         ]
