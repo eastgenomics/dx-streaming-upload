@@ -139,8 +139,7 @@ def parse_args():
     # Ensure min < max
     if args.min_size > args.max_size:
         raise_error(
-            "--min-size input must be less than --max-size",
-            send=False, sequencer_id=args.sequencer_id
+            "--min-size input must be less than --max-size", send=False
         )
 
     return args
@@ -157,17 +156,17 @@ def check_input(args):
         if e.name == "InvalidAuthentication":
             raise_error(
                 "API token (%s) is not valid. %s" % (args.api_token, e),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=args.sequencer_id
             )
         if e.name == "PermissionDenied":
             raise_error(
                 "Project (%s) is not valid. %s" % (args.project, e),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=args.sequencer_id
             )
     except dxpy.exceptions.DXError as e:
         raise_error(
             "Error getting project handler for project (%s). %s" %
-            (args.project, e), send=True, sequencer_id=args.sequencer_id
+            (args.project, e), send=True, run_id=args.sequencer_id
         )
 
     # Check that chained downstream applet is valid
@@ -177,12 +176,12 @@ def check_input(args):
         except dxpy.exceptions.DXAPIError as e:
             raise_error(
                 "Unable to resolve applet %s. %s" %(args.applet, e),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=args.sequencer_id
             )
         except dxpy.exceptions.DXError as e:
             raise_error(
                 "Error getting handler for applet (%s). %s" %(args.applet, e),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=args.sequencer_id
             )
 
     # Check that chained downstream workflow is valid
@@ -192,12 +191,12 @@ def check_input(args):
         except dxpy.exceptions.DXAPIError as e:
             raise_error(
                 "Unable to resolve workflow %s. %s" %(args.workflow, e),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=args.sequencer_id
             )
         except dxpy.exceptions.DXError as e:
             raise_error(
                 "Error getting handler for workflow (%s). %s" %(args.workflow, e),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=args.sequencer_id
             )
 
     # Check that executable to launch locally is executable
@@ -231,7 +230,7 @@ def get_run_id(run_dir, sequencer):
     if os.path.isfile(runinfo_xml) == False:
         raise_error(
             "File RunInfo.xml not found in %s" % (run_dir),
-            send=True, sequencer_id=sequencer
+            send=True, run_id=sequencer
         )
     try:
         tree = ET.parse(runinfo_xml)
@@ -243,7 +242,7 @@ def get_run_id(run_dir, sequencer):
     except:
         raise_error(
             "Could not extract run id from RunInfo.xml",
-            send=True, sequencer_id=sequencer
+            send=True, run_id=sequencer
         )
 
 
@@ -269,11 +268,11 @@ def run_command_with_retry(my_num_retries, my_command, sequencer):
 
     raise_error(
         "Number of retries exceed %d. Please check logs to troubleshoot issues." % my_num_retries,
-        send=True, sequencer_id=sequencer
+        send=True, run_id=sequencer
         )
 
 
-def raise_error(msg, send=False, sequencer_id=''):
+def raise_error(msg, send=False, run_id=''):
     """
     Prints error message and exit, and also optionally send a notification
     via Slack
@@ -284,12 +283,12 @@ def raise_error(msg, send=False, sequencer_id=''):
         error message to print and send
     send : bool
         controls if to send Slack notification
-    sequencer_id : str
-        ID of sequencer parsed from config
+    run_id : str
+        ID of run, or ID of sequencer when run has not started / can't be parsed
     """
     print_stderr("ERROR: %s" % msg)
     if send:
-        slack().send(message=msg, run=sequencer_id)
+        slack().send(message=msg, run=run_id, alert=True)
     sys.exit()
 
 
@@ -424,7 +423,7 @@ def main():
             raise_error(
                 "Encountered an error looking for %s at %s:%s. %s" % (
                     lane["record_name"], lane["remote_folder"], args.project, e
-                ), send=True, sequencer_id=args.sequencer_id
+                ), send=True, run_id=run_id
             )
 
         if old_record:
@@ -481,7 +480,7 @@ def main():
         if run_time > seconds_to_wait:
             raise_error(
                 "EXITING: Upload failed. Run did not complete after %d seconds (max wait = %ds)" %(run_time, seconds_to_wait),
-                send=True, sequencer_id=args.sequencer_id
+                send=True, run_id=run_id
                 )
 
         # Loop through all lanes in run directory
@@ -540,6 +539,13 @@ def main():
     # check if anything failed in sequencing but uploaded
     checkCycles(run_dir=args.run-dir).check()
 
+    # send slack notification to log channel of successful upload
+    slack().send(
+        message=(
+            f"Run successfully uploaded with dx-streaming-upload for {run_id}"
+        ), run=run_id, log=True
+    )
+
     downstream_input = {}
     if args.downstream_input:
         try:
@@ -547,6 +553,7 @@ def main():
         except ValueError as e:
             raise_error(
                 "Failed to read downstream input as JSON string. %s. %s" %(args.downstream_input, e),
+                send=True, run_id=run_id
             )
 
         if not isinstance(input_dict, dict):
@@ -554,7 +561,10 @@ def main():
 
         for k, v in list(input_dict.items()):
             if not (isinstance(k, str) and (isinstance(v, str) or isinstance(v, dict))):
-                    raise_error("Expected (string) key and (string or dict) value pairs for downstream input. Got (%s)%s (%s)%s" %(type(k), k, type(v), v))
+                    raise_error(
+                        "Expected (string) key and (string or dict) value pairs for downstream input. Got (%s)%s (%s)%s" %(type(k), k, type(v), v),
+                        send=True, run_id=run_id
+                        )
 
             downstream_input[k] = v
 
@@ -578,7 +588,10 @@ def main():
             try:
                 project.new_folder(reads_target_folder, parents=True)
             except dxpy.DXError as e:
-                raise_error("Failed to create new folder %s. %s" %(reads_target_folder, e))
+                raise_error(
+                    "Failed to create new folder %s. %s" %(reads_target_folder, e),
+                    send=True, run_id=run_id
+                )
 
             # Decide on job name (<executable>-<run_id>)
             job_name = applet.title + "-" + run_id
@@ -616,7 +629,10 @@ def main():
             try:
                 project.new_folder(analyses_target_folder, parents=True)
             except dxpy.DXError as e:
-                raise_error("Failed to create new folder %s. %s" %(analyses_target_folder, e))
+                raise_error(
+                    "Failed to create new folder %s. %s" %(analyses_target_folder, e),
+                    send=True, run_id=run_id
+                )
 
             # Decide on job name (<executable>-<run_id>)
             job_name = workflow.title + "-" + run_id
@@ -639,7 +655,10 @@ def main():
         try:
             sub.check_call([args.script, args.run_dir])
         except sub.CalledProcessError as e:
-            raise_error("Executable (%s) failed with error %d: %s" %(args.script, e.returncode, e.output))
+            raise_error(
+                "Executable (%s) failed with error %d: %s" %(args.script, e.returncode, e.output),
+                send=True, run_id=run_id
+            )
 
 
 if __name__ == "__main__":

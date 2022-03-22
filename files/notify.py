@@ -21,10 +21,11 @@ class slack():
     """
     def __init__(self) -> None:
         self.slack_token = os.getenv("SLACK_TOKEN")
-        self.slack_channel = os.getenv("SLACK_CHANNEL")
+        self.slack_log_channel = os.getenv("SLACK_LOG_CHANNEL")
+        self.slack_alert_channel = os.getenv("SLACK_ALERT_CHANNEL")
 
 
-    def send(self, message, run):
+    def send(self, message, run, log=False, alert=False):
         """
         Send notification to Slack
 
@@ -32,13 +33,34 @@ class slack():
         ----------
         message : str
             message to send to Slack
+        log : bool
+            if to send message to specified Slack log channel
+        alert : bool
+            if to send message to specified Slack alert channel
         run : str
             sequencing run to send notification for
         """
-        message = (
-            f":warning: *Error in dx-streaming-upload:*\n\n"
-            f"Run: {run}\n\n{message}"
-        )
+        if not log and not alert:
+            # only one should be specified
+            raise RuntimeError(
+                "ERROR: No Slack channel specified for sending alert"
+            )
+
+        if log and alert:
+            raise RuntimeError(
+                "ERROR: both log and alert specified for Slack channel."
+            )
+
+        if log:
+            channel = self.slack_log_channel
+            message = f":white_check_mark: {message}"
+        else:
+            channel = self.slack_alert_channel
+            message = (
+                f":warning: *Error in dx-streaming-upload:*\n\n"
+                f"Run: {run}\n\n{message}"
+            )
+
         http = requests.Session()
         retries = Retry(total=5, backoff_factor=10, method_whitelist=['POST'])
         http.mount("https://", HTTPAdapter(max_retries=retries))
@@ -46,7 +68,7 @@ class slack():
         response = http.post(
             'https://slack.com/api/chat.postMessage', {
                 'token': self.slack_token,
-                'channel': self.slack_channel,
+                'channel': channel,
                 'text': message
             }).json()
 

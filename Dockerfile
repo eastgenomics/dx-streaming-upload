@@ -11,6 +11,7 @@ RUN pip3 install dxpy
 
 RUN cron
 
+# add a user to run uploads with
 RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload
 RUN chown -R 1005 /opt/
 RUN chown -R 1005 /var/lock/
@@ -21,8 +22,5 @@ RUN chown 1005 /var/run/crond.pid
 RUN chmod gu+rw /var/run
 RUN chmod gu+s /usr/sbin/cron
 
-RUN mkdir /home/dx-upload/runs
+# create required log dir, playbook(s) should point to here
 RUN mkdir /home/dx-upload/logs
-RUN mkdir /home/dx-upload/tars
-
-
