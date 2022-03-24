@@ -39,7 +39,6 @@ CONFIG_DEFAULT = {
     "n_upload_threads": 8,
     "downstream_input": '',
     "n_streaming_threads": 1,
-    "sequencer_id": "",
     "delay_sample_sheet_upload": False,
     "novaseq": False
 }
@@ -89,6 +88,15 @@ def parse_args():
                         help='Print verbose debugging messages',
                         action='store_true')
 
+    requiredNamed.add_argument(
+        "--sequencer_id", default=None,
+        help=(
+            "ID of sequencer defined in config, used to keep log and lock "
+            "file unique, and for adding to Slack notifications to know "
+            "which sequencer has an issue if multiple are set up"
+        )
+    )
+
     optionalNamed = parser.add_argument_group("Optional named arguemnts")
 
 
@@ -134,10 +142,17 @@ def get_dx_auth_token():
         sys.exit("Could not parse auth_token in dxpy environment, ensure that you have logged in using an API token!\n{0}: {1}".format(e.errno, e.strerror))
 
 
-def get_streaming_config(config_file, project, applet, workflow, script, token):
+def get_streaming_config(
+    config_file, project, applet, workflow, script, sequencer_id, token
+):
     """ Configure settings by reading in the config_file, which
     is assumed to be a YAML file"""
-    config = {"project": project, "token": token}
+    config = {
+        "project": project,
+        "sequencer_id": sequencer_id,
+        "token": token
+    }
+
     if applet:
         config["applet"] = applet
     if workflow:
@@ -382,7 +397,7 @@ def _trigger_streaming_upload(folder, config):
                "-D", config['run_length'],
                "-I", config['n_seq_intervals'],
                "-u", config['n_upload_threads'],
-               "-sequencer_id", config['sequencer_id'],
+               "--sequencer_id", f"\'{config['sequencer_id']}\'",
                "--verbose"]
 
     if config['novaseq']:
@@ -449,7 +464,8 @@ def main():
 
     streaming_config = get_streaming_config(args.config, args.project,
                                             args.applet, args.workflow,
-                                            args.script, token)
+                                            args.script, args.sequencer_id,
+                                            token)
 
     if DEBUG: print("==DEBUG== Got config: ", streaming_config)
 

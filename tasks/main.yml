@@ -183,7 +183,7 @@
 
 # Create lock file
 - name: Create lock file for CRON to wait on using flock
-  file: path=/var/lock/{{ item.sequencer_id }}_dnanexus_uploader.lock state=touch
+  file: path=/var/lock/dnanexus_uploader_{{ item.sequencer_id }}.lock state=touch
   with_items: "{{ monitored_users  }}"
 
 # Make sure required parameters are defined
@@ -206,7 +206,7 @@
   cron: >
     name="DNAnexus monitor runs (debug) {{ item.1 }}"
     user="{{ item.0.username }}"
-    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.sequencer_id }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.sequencer_id }}.log 2>&1' > ~/dx-stream_cron_{{ item.sequencer_id }}.log 2>&1"
+    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.0.sequencer_id }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/{{ item.0.sequencer_id }}_monitor_runs.config -p {{ upload_project }} --sequencer_id {{ item.0.sequencer_id }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.0.sequencer_id }}.log 2>&1' > ~/dx-stream_cron_{{ item.0.sequencer_id }}.log 2>&1"
   with_subelements:
         - "{{ monitored_users }}"
         - monitored_directories
@@ -220,7 +220,7 @@
     name="DNAnexus monitor runs (deploy) {{ item.1 }}"
     special_time=hourly
     user="{{ item.0.username }}"
-    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.sequencer_id }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/{{ item.sequencer_id }}_monitor_runs.config -p {{ upload_project }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.sequencer_id }}.log 2>&1' > ~/dx-stream_cron_{{ item.sequencer_id }}.log 2>&1"
+    job="flock -w 5 /var/lock/dnanexus_uploader_{{ item.0.sequencer_id }}.lock bash -ex -c 'PATH=/opt/dnanexus-upload-agent:$PATH; python3 /opt/dnanexus/scripts/monitor_runs.py -c ~/dnanexus/config/{{ item.0.sequencer_id }}_monitor_runs.config -p {{ upload_project }}  --sequencer_id {{ item.0.sequencer_id }} -d {{ item.1 }} {{ \'-A\' if \'applet\' in item.0 else \'\' }} {{ item.0.applet if \'applet\' in item.0 else \'\'}} {{ \'-w\' if \'workflow\' in item.0 else \'\' }} {{ item.0.workflow if \'workflow\' in item.0 else \'\'}} {{ \'-s\' if \'script\' in item.0 else \'\' }} {{ item.0.script if \'script\' in item.0 else \'\'}} -v > ~/monitor_{{ item.0.sequencer_id }}.log 2>&1' > ~/dx-stream_cron_{{ item.0.sequencer_id }}.log 2>&1"
   with_subelements:
         - "{{ monitored_users }}"
         - monitored_directories

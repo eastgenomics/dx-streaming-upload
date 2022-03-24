@@ -100,7 +100,7 @@ def parse_args():
     parser.add_argument(
         "--sequencer_id", default="",
         help=(
-            "ID of sequencer defined int config, used to keep log and lock "
+            "ID of sequencer defined in config, used to keep log and lock "
             "file unique, and for adding to Slack notifications to know "
             "which sequencer has an issue if multiple are set up"
         )

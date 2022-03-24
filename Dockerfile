@@ -7,15 +7,19 @@ RUN apt update
 RUN apt install ansible cron software-properties-common git nano python3 python3-dev python3-pip -y
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install --upgrade --ignore-installed pyyaml
-RUN pip3 install dxpy
+RUN pip3 install dxpy beautifulsoup4 lxml
 
 RUN cron
 
 # add a user to run uploads with
-RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload
+RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload -G sudo
 RUN chown -R 1005 /opt/
 RUN chown -R 1005 /var/lock/
 RUN su - dx-upload
+
+# copy in dx-streaming-upload
+COPY dx-streaming-upload dx-streaming-upload
+COPY dx-streaming-upload /opt/dx-streaming-upload
 
 RUN touch /var/run/crond.pid
 RUN chown 1005 /var/run/crond.pid
