@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 # disable prompt during packages installation
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt update 
+RUN apt update
 RUN apt install ansible cron software-properties-common git nano python3 python3-dev python3-pip -y
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install --upgrade --ignore-installed pyyaml
@@ -18,8 +18,7 @@ RUN chown -R 1005 /var/lock/
 RUN su - dx-upload
 
 # copy in dx-streaming-upload
-COPY dx-streaming-upload dx-streaming-upload
-COPY dx-streaming-upload /opt/dx-streaming-upload
+COPY . /home/dx-upload/dx-streaming-upload
 
 RUN touch /var/run/crond.pid
 RUN chown 1005 /var/run/crond.pid
@@ -28,3 +27,4 @@ RUN chmod gu+s /usr/sbin/cron
 
 # create required log dir, playbook(s) should point to here
 RUN mkdir /home/dx-upload/logs
+WORKDIR /home/dx-upload/
