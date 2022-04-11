@@ -28,3 +28,4 @@ RUN chmod gu+s /usr/sbin/cron
 # create required log dir, playbook(s) should point to here
 RUN mkdir /home/dx-upload/logs
 WORKDIR /home/dx-upload/
+ENTRYPOINT /bin/bash
