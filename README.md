@@ -210,6 +210,55 @@ These logs can be used to diagnose failures of upload from the local machine to 
 
 The downstream applet will be run in the project that the RUN directory is uploaded to (as specified in role variable `upload_project`). Users can log in to their DNAnexus account (corresponding to the `dx_token` or `dx_user_token`) and navigate to the upload project to monitor the progress of the applet triggered. Typically, on failure of a DNAnexus job, the user will receive a notification email, which will direct the user to check the log of the failed job for further diagnosis and debugging.
 
+
+Docker and Slack Notifications
+------------------------------
+
+A dockerfile has been written for conveniencing of packaging Ansible and its requirements. Included with this are also optional Slack notifications to alert issues, and a notification of successful upload for each sequencing run. Issues alerted may include:
+
+- Invalid DNAnexus API token
+- Permissions issues for accessing projects / objects in DNAnexus
+- Errors parsing sequencing run files (i.e. `RunInfo.xml`)
+- Timing out uploading files
+- Incomplete sequencing run (missing cycles)
+
+
+To run the docker image after building, several variables must be set in addition to a configured playbook. These may either be passed as single variables, or as env file to `docker run`
+
+- `SLACK_TOKEN`: Slack app API token
+- `SLACK_LOG_CHANNEL`: Slack channel to send successful upload notifications to
+- `SLACK_ALERT_CHANNEL` : Slack channel to send alert notifications for issues to
+
+To allow multiple sequencers to be monitored and simultaneous uploads to occur from one container, the `sequencer_id` field in the playbook `must` be set for each instance of dx-streaming-upload.
+
+Example commands to build and run from Docker:
+```
+docker build -t dx-streaming-upload:v1.0.0 .
+
+# run container in background, bind required directories and specify Slack env variables
+docker run -itd \
+  --name dx-streaming-upload \
+  --user dx-upload \
+  -v /genetics:/genetics \
+  -v /playbooks:/playbooks \
+  -v /var/logs/dx-streaming-upload/:/home/dx-upload/logs \
+  -e SLACK_TOKEN="{slack_token}" \
+  -e SLACK_LOG_CHANNEL="{slack_log_channel}" \
+  -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \
+  dx-streaming-upload:v1.0.0
+
+# start up Ansible in the detached container
+docker exec -it {container-id} ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_token=<SECRET_TOKEN>"
+
+# drop in to the running container if needed (i.e. to investigate issues)
+sudo docker exec -it {container-id} bash
+
+```
+
+**Notes on Docker**
+- Image is created with a user `dx-upload' in the image for running the upload
+
+
 License
 -------
 
