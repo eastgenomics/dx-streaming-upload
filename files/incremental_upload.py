@@ -576,7 +576,7 @@ def main():
         message=(
             f":white_check_mark: dx-streaming-upload: "
             f"run successfully uploaded: *{run_id}*\n"
-            f"\tTotal upload time: {total_time}"
+            f"\t\tTotal upload time: {total_time}"
         ), run=run_id, log=True
     )
 
