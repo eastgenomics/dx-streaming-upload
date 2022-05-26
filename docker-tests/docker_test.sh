@@ -23,15 +23,11 @@ main() {
 
     printf "\nCreating test runs:\n\t${A01295}\n\t${A01303}\n"
 
-    # create example dir structure
-    printf "\nCreating example directory structure...\n\n"
-    mkdir -p ~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/
-    mkdir -p ~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/
-
     # create cycle dirs, notify.py gets the highest in /Data/Intensities/Basecalls
     # so just create one to match
-    mkdir -p ~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/C318.1
-    mkdir -p ~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/C123.1
+    printf "\nCreating example directory structure...\n"
+    mkdir -p ~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1
+    mkdir -p ~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1
 
     # going to create RTAComplete.txt and CopyComplete.txt so it can test for both NovaSeq True/False
     # in config, in practice only one will be written and checked for in incremental_upload.py
@@ -52,14 +48,16 @@ main() {
     ansible-playbook ~/dx-streaming-upload/docker-tests/test-playbook.yml -v --extra-vars "dx_token=$2"
 
     # start cron
-    service start cron
+    printf "\nStarting cron:\n\n"
+    service cron start
 
     # create some files with enough size (2GB each) to trigger an upload
     printf "\nCreating test files...\n\n"
-    dd if=/dev/urandom of=~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/C318.1/output.dat  bs=1000 count=2000000
-    dd if=/dev/urandom of=~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/C123.1/output.dat  bs=1000 count=2000000
+    dd if=/dev/urandom of=~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=1000 count=2000000
+    dd if=/dev/urandom of=~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=1000 count=2000000
 
+    printf "\nDone! The docker container should now be running, and uploads starting for 2 test uploads.\n"
+    printf "A01295 should upload successfully, and A01303 should fail due to incomplete run cycle dirs.\n"
 }
 
-main $1 $2
-
+main "$1" "$2"

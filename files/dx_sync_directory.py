@@ -333,7 +333,7 @@ def check_log(log, args):
         # Check that log has correct keys
         if all (k in log for k in ("tar_files","next_tar_index", "files", "file_prefix")):
             print('\n--- All required keys present in log', file=sys.stderr)
-    
+
     except KeyError as e:
         sys.exit('ERROR: Invalid log file. Log does not have "%s" key' % (e))
 
@@ -546,7 +546,6 @@ def main():
 
     args = parse_args()
 
-    print('Called dx_sync_directory.py')
     print('\nUser Input:\n%s\n' % args, file=sys.stderr)
 
     args = check_inputs(args)

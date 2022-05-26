@@ -40,10 +40,6 @@ class slack():
         run : str
             sequencing run to send notification for
         """
-        print('Self things:')
-        print(f'log: {self.slack_log_channel}')
-        print(f'alert: {self.slack_alert_channel}')
-        print(f'token: {self.slack_token}')
         if not log and not alert:
             # only one should be specified
             raise RuntimeError(
@@ -57,7 +53,6 @@ class slack():
 
         if log:
             channel = self.slack_log_channel
-            message = f"dx-streaming-upload: {message}"
         else:
             channel = self.slack_alert_channel
             message = (
@@ -114,7 +109,7 @@ class checkCycles():
                 f"Cycles found:"
                 f"\tLane\t\tCycles\n\n\t{message}"
             )
-            slack().send(message=message, run=self.run_dir)
+            slack().send(message=message, run=self.run_dir, alert=True)
 
             return False
         else:
@@ -156,11 +151,12 @@ class checkCycles():
             list of integers of max cycle dir per lane
         """
         cycle_path = os.path.join(self.run_dir, self.cycle_dir)
-        lanes = sorted(os.listdir(cycle_path))
+        lanes = sorted(os.listdir(cycle_path))  # get all lane directories
 
-        lane_dirs = [os.listdir(os.path.join(cycle_path, x)) for x in lanes]
+        # get all cycles in each lane
+        cycle_dirs = [os.listdir(os.path.join(cycle_path, x)) for x in lanes]
 
-        max_cycles = [sorted(x)[-1] for x in lane_dirs]  # get highest cycle
+        max_cycles = [sorted(x)[-1] for x in cycle_dirs]  # get highest cycle
         max_cycles = [
             int(x.replace('C', '').replace('.1', '')) for x in max_cycles
         ]

@@ -375,10 +375,6 @@ def run_sync_dir(lane, args, finish=False):
     return output.split()
 
 def termination_file_exists(run_dir, novaseq):
-    print('Checking if run is complete....')
-    print(f'Run: {run_dir}\nNovaSeq: {novaseq}')
-    print(f'CopyComplete.txt present: {os.path.isfile(os.path.join(run_dir, "CopyComplete.txt"))}')
-
     if not novaseq:
         return os.path.isfile(os.path.join(run_dir, "RTAComplete.txt")) or os.path.isfile(os.path.join(run_dir, "RTAComplete.xml"))
     else:
@@ -390,17 +386,16 @@ def main():
     check_input(args)
     run_id = get_run_id(args.run_dir, args.sequencer_id)
 
-    print(f"Slack token: {os.getenv('SLACK_TOKEN')}")
-    print(f"Slack log channel: {os.getenv('SLACK_LOG_CHANNEL')}")
-    print(f"Slack alerts channel: {os.getenv('SLACK_ALERTS_CHANNEL')}")
-
     try:
         slack().send(
-            message=f"Starting upload of run {run_id}",
+            message=f":arrow_up: dx-streaming-upload: Starting upload of run {run_id}",
             run=run_id, log=True
         )
     except Exception as e:
         print_stderr(f"Error sending slack message: {e}")
+
+    # timing upload to add to slack success message
+    start = time.perf_counter()
 
     # Set all naming conventions
     REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
@@ -525,8 +520,12 @@ def main():
         properties = record.get_properties()
         lane["log_file_id"] = upload_single_file(lane["log_path"], args.project,
                                          lane["remote_folder"], properties)
-
+        print(f"all file ids: {file_ids}")
         for file_id in file_ids:
+            print(f"record: {record}")
+            print(f"file id: {file_id}")
+            print(f"project: {args.project}")
+            print(f"properties: {properties}")
             dxpy.get_handler(file_id, project=args.project).set_properties(properties)
         details = {
             'run_id': run_id,
@@ -567,12 +566,16 @@ def main():
             ), send=False, run=args.run_id
         )
 
-
+    end = time.perf_counter()
+    upload_minutes = (round(end) - round(start)) / 60
+    total_time = f"{125 // upload_minutes}h{125 % upload_minutes}m"
 
     # send slack notification to log channel of successful upload
     slack().send(
         message=(
-            f":white_check_mark: Run successfully uploaded: {run_id}"
+            f":white_check_mark: dx-streaming-upload: "
+            f"Run successfully uploaded: {run_id}\n"
+            f"Total upload time: {total_time}"
         ), run=run_id, log=True
     )
 
