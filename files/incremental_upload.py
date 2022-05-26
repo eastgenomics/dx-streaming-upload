@@ -11,6 +11,8 @@ import dxpy
 import argparse
 import json
 from math import ceil
+from pathlib import Path
+from shutil import disk_usage
 
 from notify import slack, checkCycles
 
@@ -395,8 +397,15 @@ def main():
     except Exception as e:
         print_stderr(f"Error sending slack message: {e}")
 
-    # timing upload to add to slack success message
+    # timing upload and calculating disk space to add to slack success message
     start = time.perf_counter()
+    usage = disk_usage(args.run_dir)  # tuple of (total, used, free) returned
+    usage = (
+        f"Disk usage before upload: "
+        f"{round(usage[1] / 1024 / 1024 / 1024, 2)}/"
+        f"{round(usage[0] / 1024 / 1024 / 1024, 2)} GB "
+        f"({round(usage[1] / usage[0] * 100, 2)}%)"
+    )
 
     # Set all naming conventions
     REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
@@ -567,16 +576,32 @@ def main():
             ), send=False, run=args.run_id
         )
 
+    # calculate total time and disk usage
     end = time.perf_counter()
     upload_minutes = ceil((round(end) - round(start)) / 60)
     total_time = f"{upload_minutes // 60}h{upload_minutes % 60}m"
 
+    # calculate disk usage of run and total space
+    run_size = round(sum(
+        file.stat().st_size
+        for file in Path(args.run_dir).rglob('*')
+        if file.exists()
+    ) / 1024 / 1024 / 1024, 2)
+    usage = disk_usage(args.run_dir)  # tuple of (total, used, free) returned
+    usage = (
+        f"{round(float(usage[1]) / 1024 / 1024 / 1024, 2)}/"
+        f"{round(float(usage[0]) / 1024 / 1024 / 1024, 2)} GB "
+        f"({round(float(usage[1]) / float(usage[0]) * 100, 2)}%)"
+    )
+
     # send slack notification to log channel of successful upload
     slack().send(
         message=(
-            f":white_check_mark: dx-streaming-upload: "
-            f"run successfully uploaded: *{run_id}*\n"
-            f"\t\tTotal upload time: {total_time}"
+            f" dx-streaming-upload: "
+            f"run successfully uploaded *{run_id}*\n"
+            f"\t\t\tTotal upload time: {total_time}\n"
+            f"\t\t\tTotal size of run: {run_size}GB\n"
+            f"\t\t\tDisk usage after upload: {usage}"
         ), run=run_id, log=True
     )
 
