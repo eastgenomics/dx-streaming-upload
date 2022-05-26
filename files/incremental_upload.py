@@ -561,7 +561,7 @@ def main():
         # completed run with missing cycles, stop any downstream analysis
         raise_error(
             (
-                f'Incomplete cycles for uploaded run: *{args.run_dir}*.\n'
+                f'Incomplete cycles for uploaded run: *{run_id}*.\n'
                 f'Stopping and not running any downstream analysis.'
             ), send=False, run=args.run_id
         )

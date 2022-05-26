@@ -72,7 +72,7 @@ class slack():
         response = http.post(
             'https://slack.com/api/chat.postMessage', {
                 'token': self.slack_token,
-                'channel': f"#{channel}",
+                'channel': f"{channel}",
                 'text': message
             }).json()
 
