@@ -3,21 +3,21 @@
     monitored_users:
       - username: dx-upload
         sequencer_id: A01295
-        local_tar_directory: /home/dx-upload/genetics/A01295
+        local_tar_directory: /home/dx-upload/genetics/A01295_tar
         local_log_directory: /home/dx-upload/logs
         exclude_patterns: Analysis
         monitored_directories:
-          - /home/dx-upload/genetics/A01295
+          - /home/dx-upload/genetics/A01295/
         min_size: 250
         max_size: 1000
         novaseq: True
       - username: dx-upload
         sequencer_id: A01303
-        local_tar_directory: /home/dx-upload/genetics/A01303
+        local_tar_directory: /home/dx-upload/genetics/A01303_tar
         local_log_directory: /home/dx-upload/logs
         exclude_patterns: Analysis
         monitored_directories:
-          - /home/dx-upload/genetics/A01303
+          - /home/dx-upload/genetics/A01303/
         min_size: 250
         max_size: 1000
         novaseq: True

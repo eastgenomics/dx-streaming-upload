@@ -16,32 +16,49 @@ main() {
     cat ~/dx-streaming-upload/docker-tests/test_files/test-playbook-template.yml | \
         sed -r "s/(upload_project:).*/\1 $1/g" > ~/dx-streaming-upload/docker-tests/test-playbook.yml
 
+    printenv | grep SLACK >> /etc/environment
+
+    A01295="A01295_${RANDOM}_test_upload"
+    A01303="A01303_${RANDOM}_test_upload"
+
+    printf "\nCreating test runs:\n\t${A01295}\n\t${A01303}\n"
+
     # create example dir structure
-    mkdir -p ~/genetics/A01295/test_A01295_novaseq/Data/Intensities/BaseCalls/
-    mkdir -p ~/genetics/A01303/test_A01303_novaseq/Data/Intensities/BaseCalls/
+    printf "\nCreating example directory structure...\n\n"
+    mkdir -p ~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/
+    mkdir -p ~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/
 
     # create cycle dirs, notify.py gets the highest in /Data/Intensities/Basecalls
     # so just create one to match
-    mkdir -p ~/genetics/A01295/test_A01295_novaseq/Data/Intensities/BaseCalls/C318.1
-    mkdir -p ~/genetics/A01303/test_A01303_novaseq/Data/Intensities/BaseCalls/C123.1
+    mkdir -p ~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/C318.1
+    mkdir -p ~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/C123.1
 
-    touch ~/genetics/A01295/test_A01295_novaseq/SampleSheet.csv \
-          ~/genetics/A01295/test_A01295_novaseq/RTAComplete.txt
+    # going to create RTAComplete.txt and CopyComplete.txt so it can test for both NovaSeq True/False
+    # in config, in practice only one will be written and checked for in incremental_upload.py
+    touch ~/genetics/A01295/${A01295}/SampleSheet.csv \
+          ~/genetics/A01295/${A01295}/RTAComplete.txt \
+          ~/genetics/A01295/${A01295}/CopyComplete.txt
 
-    touch ~/genetics/A01303/test_A01303_novaseq/SampleSheet.csv \
-          ~/genetics/A01303/test_A01303_novaseq/RTAComplete.txt
+    touch ~/genetics/A01303/${A01303}/SampleSheet.csv \
+          ~/genetics/A01303/${A01303}/RTAComplete.txt \
+          ~/genetics/A01303/${A01303}/CopyComplete.txt
 
     # create RunInfo.xml files with IDs added
-    cat ~/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"A01295\">/g" > ~/genetics/A01295/test_A01295_novaseq/RunInfo.xml
-    cat ~/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"A01303\">/g" > ~/genetics/A01303/test_A01303_novaseq/RunInfo.xml
-
-    # create some files with enough size to trigger an upload
-    dd if=/dev/zero of=~/genetics/A01295/test_A01295_novaseq/output.dat  bs=200M count=10
-    dd if=/dev/zero of=~/genetics/A01303/test_A01303_novaseq/output.dat  bs=200M count=10
+    cat ~/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295}\">/g" > ~/genetics/A01295/${A01295}/RunInfo.xml
+    cat ~/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303}\">/g" > ~/genetics/A01303/${A01303}/RunInfo.xml
 
     # trigger Ansible
-    cd ~
-    ansible-playbook ~/dx-streaming-upload/docker-tests/test-playbook.yml --extra-vars "dx_token=$2"
+    printf "\n\nStarting dx-streaming-upload\n\n"
+    ansible-playbook ~/dx-streaming-upload/docker-tests/test-playbook.yml -v --extra-vars "dx_token=$2"
+
+    # start cron
+    service start cron
+
+    # create some files with enough size (2GB each) to trigger an upload
+    printf "\nCreating test files...\n\n"
+    dd if=/dev/urandom of=~/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/C318.1/output.dat  bs=1000 count=2000000
+    dd if=/dev/urandom of=~/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/C123.1/output.dat  bs=1000 count=2000000
+
 }
 
 main $1 $2

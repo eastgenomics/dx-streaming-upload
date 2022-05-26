@@ -40,6 +40,10 @@ class slack():
         run : str
             sequencing run to send notification for
         """
+        print('Self things:')
+        print(f'log: {self.slack_log_channel}')
+        print(f'alert: {self.slack_alert_channel}')
+        print(f'token: {self.slack_token}')
         if not log and not alert:
             # only one should be specified
             raise RuntimeError(
@@ -53,13 +57,18 @@ class slack():
 
         if log:
             channel = self.slack_log_channel
-            message = f":white_check_mark: {message}"
+            message = f"dx-streaming-upload: {message}"
         else:
             channel = self.slack_alert_channel
             message = (
                 f":warning: *Error in dx-streaming-upload:*\n\n"
                 f"Run: {run}\n\n{message}"
             )
+
+        print(
+            f"Sending message to Slack channel {channel}\n\n{message}",
+            sys.stderr
+        )
 
         http = requests.Session()
         retries = Retry(total=5, backoff_factor=10, method_whitelist=['POST'])
@@ -68,7 +77,7 @@ class slack():
         response = http.post(
             'https://slack.com/api/chat.postMessage', {
                 'token': self.slack_token,
-                'channel': channel,
+                'channel': f"#{channel}",
                 'text': message
             }).json()
 
@@ -106,6 +115,10 @@ class checkCycles():
                 f"\tLane\t\tCycles\n\n\t{message}"
             )
             slack().send(message=message, run=self.run_dir)
+
+            return False
+        else:
+            return True
 
 
     def read_runinfo_xml(self):

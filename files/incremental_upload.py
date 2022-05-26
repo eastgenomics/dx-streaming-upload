@@ -288,7 +288,10 @@ def raise_error(msg, send=False, run_id=''):
     """
     print_stderr("ERROR: %s" % msg)
     if send:
-        slack().send(message=msg, run=run_id, alert=True)
+        try:
+            slack().send(message=msg, run=run_id, alert=True)
+        except Exception as e:
+            print_stderr(f'Error in sending slack alert:\n{e}')
     sys.exit()
 
 
@@ -371,7 +374,11 @@ def run_sync_dir(lane, args, finish=False):
     )
     return output.split()
 
-def termination_file_exists(novaseq, run_dir):
+def termination_file_exists(run_dir, novaseq):
+    print('Checking if run is complete....')
+    print(f'Run: {run_dir}\nNovaSeq: {novaseq}')
+    print(f'CopyComplete.txt present: {os.path.isfile(os.path.join(run_dir, "CopyComplete.txt"))}')
+
     if not novaseq:
         return os.path.isfile(os.path.join(run_dir, "RTAComplete.txt")) or os.path.isfile(os.path.join(run_dir, "RTAComplete.xml"))
     else:
@@ -382,6 +389,18 @@ def main():
     args = parse_args()
     check_input(args)
     run_id = get_run_id(args.run_dir, args.sequencer_id)
+
+    print(f"Slack token: {os.getenv('SLACK_TOKEN')}")
+    print(f"Slack log channel: {os.getenv('SLACK_LOG_CHANNEL')}")
+    print(f"Slack alerts channel: {os.getenv('SLACK_ALERTS_CHANNEL')}")
+
+    try:
+        slack().send(
+            message=f"Starting upload of run {run_id}",
+            run=run_id, log=True
+        )
+    except Exception as e:
+        print_stderr(f"Error sending slack message: {e}")
 
     # Set all naming conventions
     REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
@@ -473,7 +492,7 @@ def main():
 
     initial_start_time = time.time()
     # While loop waiting for RTAComplete.txt or RTAComplete.xml
-    while not termination_file_exists(args.novaseq, args.run_dir):
+    while not termination_file_exists(args.run_dir, args.novaseq):
         start_time=time.time()
         run_time = start_time - initial_start_time
         # Fail if run time exceeds total time to wait
@@ -536,13 +555,24 @@ def main():
 
     print_stderr("Run %s successfully streamed!" % (run_id))
 
-    # check if anything failed in sequencing but uploaded
-    checkCycles(run_dir=args.run-dir).check()
+    # check if anything failed in sequencing (i.e. incomplete cycles) but uploaded
+    complete = checkCycles(run_dir=args.run_dir).check()
+
+    if not complete:
+        # completed run with missing cycles, stop any downstream analysis
+        raise_error(
+            (
+                f'Incomplete cycles for uploaded run: {args.run_dir}.\n'
+                f'Stopping and not running any downstream analysis.'
+            ), send=False, run=args.run_id
+        )
+
+
 
     # send slack notification to log channel of successful upload
     slack().send(
         message=(
-            f"Run successfully uploaded with dx-streaming-upload for {run_id}"
+            f":white_check_mark: Run successfully uploaded: {run_id}"
         ), run=run_id, log=True
     )
 

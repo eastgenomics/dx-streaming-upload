@@ -229,7 +229,7 @@ To run the docker image after building, several variables must be set in additio
 - `SLACK_LOG_CHANNEL`: Slack channel to send successful upload notifications to
 - `SLACK_ALERT_CHANNEL` : Slack channel to send alert notifications for issues to
 
-To allow multiple sequencers to be monitored and simultaneous uploads to occur from one container, the `sequencer_id` field in the playbook `must` be set for each instance of dx-streaming-upload.
+To allow multiple sequencers to be monitored and simultaneous uploads to occur from one container, the `sequencer_id` field in the playbook *must* be set for each instance of dx-streaming-upload.
 
 Example commands to build and run from Docker:
 ```

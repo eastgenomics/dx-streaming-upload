@@ -394,6 +394,7 @@ def split_into_tar_files(files_to_upload, log, args):
         print('QUITTING: Size of files to upload is not big ' +
                 'enough to to be uploaded yet. Please run again later or ' +
                 'specify --min-tar-size to be smaller', file=sys.stderr)
+        print(f'Files found to upload: {files_to_upload}', file=sys.stderr)
         return []
 
     return tars_to_upload
@@ -545,6 +546,7 @@ def main():
 
     args = parse_args()
 
+    print('Called dx_sync_directory.py')
     print('\nUser Input:\n%s\n' % args, file=sys.stderr)
 
     args = check_inputs(args)
