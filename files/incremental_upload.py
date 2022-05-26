@@ -388,7 +388,7 @@ def main():
 
     try:
         slack().send(
-            message=f":arrow_up: dx-streaming-upload: Starting upload of run {run_id}",
+            message=f":arrow_up: dx-streaming-upload: Starting upload of run *{run_id}*",
             run=run_id, log=True
         )
     except Exception as e:
@@ -561,7 +561,7 @@ def main():
         # completed run with missing cycles, stop any downstream analysis
         raise_error(
             (
-                f'Incomplete cycles for uploaded run: {args.run_dir}.\n'
+                f'Incomplete cycles for uploaded run: *{args.run_dir}*.\n'
                 f'Stopping and not running any downstream analysis.'
             ), send=False, run=args.run_id
         )
@@ -574,7 +574,7 @@ def main():
     slack().send(
         message=(
             f":white_check_mark: dx-streaming-upload: "
-            f"Run successfully uploaded: {run_id}\n"
+            f"Run successfully uploaded: *{run_id}*\n"
             f"Total upload time: {total_time}"
         ), run=run_id, log=True
     )

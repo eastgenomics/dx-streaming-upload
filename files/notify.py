@@ -57,7 +57,7 @@ class slack():
             channel = self.slack_alert_channel
             message = (
                 f":warning: *Error in dx-streaming-upload:*\n\n"
-                f"Run: {run}\n\n{message}"
+                f"Run: *{run}*\n\n{message}"
             )
 
         print(
@@ -101,7 +101,7 @@ class checkCycles():
         if not completed:
             # at least one lane not completed all cycles
             message = f"\n\t".join([
-                f"\t\t\t\t\t\t{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
+                f"\t\t\t\t\t{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
             ])
             message = (
                 f"Total sequencing cycles do not appear to have completed.\n"
