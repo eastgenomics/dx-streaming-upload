@@ -10,6 +10,7 @@ import time
 import dxpy
 import argparse
 import json
+from math import ceil
 
 from notify import slack, checkCycles
 
@@ -388,7 +389,7 @@ def main():
 
     try:
         slack().send(
-            message=f":arrow_up: dx-streaming-upload: Starting upload of run *{run_id}*",
+            message=f":arrow_up: dx-streaming-upload: starting upload of run *{run_id}*",
             run=run_id, log=True
         )
     except Exception as e:
@@ -567,8 +568,8 @@ def main():
         )
 
     end = time.perf_counter()
-    upload_minutes = (round(end) - round(start)) / 60
-    total_time = f"{125 // upload_minutes}h{125 % upload_minutes}m"
+    upload_minutes = ceil((round(end) - round(start)) / 60)
+    total_time = f"{upload_minutes // 60}h{upload_minutes % 60}m"
 
     # send slack notification to log channel of successful upload
     slack().send(
