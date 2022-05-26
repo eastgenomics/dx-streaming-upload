@@ -233,19 +233,23 @@ To allow multiple sequencers to be monitored and simultaneous uploads to occur f
 
 Example commands to build and run from Docker:
 ```
+# build the image
 docker build -t dx-streaming-upload:v1.0.0 .
 
 # run container in background, bind required directories and specify Slack env variables
 docker run -itd \
   --name dx-streaming-upload \
   --user dx-upload \
-  -v /genetics:/genetics \
+  -v /genetics:/genetics \  # /genetics is the local volume where sequencing data is written
   -v /playbooks:/playbooks \
   -v /var/logs/dx-streaming-upload/:/home/dx-upload/logs \
   -e SLACK_TOKEN="{slack_token}" \
   -e SLACK_LOG_CHANNEL="{slack_log_channel}" \
   -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \
   dx-streaming-upload:v1.0.0
+
+# cron doesn't have access to env variables, therefore add them to /etc/environment where it can read
+docker exec -it {container-id} bash -c "printenv | grep SLACK >> /etc/environment"
 
 # start up Ansible in the detached container
 docker exec -it {container-id} ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_token=<SECRET_TOKEN>"
@@ -256,7 +260,8 @@ sudo docker exec -it {container-id} bash
 ```
 
 **Notes on Docker**
-- Image is created with a user `dx-upload' in the image for running the upload
+- Image is created with a user `dx-upload' in the image for running the upload, working dir is `/home/dx-upload/`
+- A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 2 simultaneous sequencing runs being uploaded from 2 separate sequencers. One is expected to succeed (`A01295`) and one should fail due to incomplete cycles (`A01303`). To run this, the same commands as above should be run to build and run the image. To then start the test do the following: `docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}"`
 
 
 License
