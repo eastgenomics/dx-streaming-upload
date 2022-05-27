@@ -389,16 +389,7 @@ def main():
     check_input(args)
     run_id = get_run_id(args.run_dir, args.sequencer_id)
 
-    try:
-        slack().send(
-            message=f":arrow_up: dx-streaming-upload: starting upload of run *{run_id}*",
-            run=run_id, log=True
-        )
-    except Exception as e:
-        print_stderr(f"Error sending slack message: {e}")
-
-    # timing upload and calculating disk space to add to slack success message
-    start = time.perf_counter()
+    # calculating disk space to add to slack success message
     usage = disk_usage(args.run_dir)  # tuple of (total, used, free) returned
     usage = (
         f"Disk usage before upload: "
@@ -406,6 +397,19 @@ def main():
         f"{round(usage[0] / 1024 / 1024 / 1024, 2)} GB "
         f"({round(usage[1] / usage[0] * 100, 2)}%)"
     )
+
+    try:
+        slack().send(
+            message=(
+                f":arrow_up: dx-streaming-upload: starting upload of run "
+                f"*{run_id}*\n\t\t{usage}"
+            ), run=run_id, log=True
+        )
+    except Exception as e:
+        print_stderr(f"Error sending slack message: {e}")
+
+    # timing upload
+    start = time.perf_counter()
 
     # Set all naming conventions
     REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
@@ -597,7 +601,7 @@ def main():
     # send slack notification to log channel of successful upload
     slack().send(
         message=(
-            f" dx-streaming-upload: "
+            f":white_check_mark: dx-streaming-upload: "
             f"run successfully uploaded *{run_id}*\n"
             f"\t\t\tTotal upload time: {total_time}\n"
             f"\t\t\tTotal size of run: {run_size}GB\n"
