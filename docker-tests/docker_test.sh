@@ -16,7 +16,14 @@ main() {
     cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/test-playbook-template.yml | \
         sed -r "s/(upload_project:).*/\1 $1/g" > /home/dx-upload/dx-streaming-upload/docker-tests/test-playbook.yml
 
-    printenv | grep SLACK >> /etc/environment
+    # add slack token and proxy to /etc/environment for cron to access
+    if [ ! $(grep 'SLACK' /etc/environment) ]; then
+        printenv | grep SLACK >> /etc/environment
+    fi
+
+    if [ ! $(grep 'proxy' /etc/environment) ]; then
+        printenv | grep -i proxy >> /etc/environment
+    fi
 
     A01295="A01295_${RANDOM}_test_upload"
     A01303="A01303_${RANDOM}_test_upload"
