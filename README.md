@@ -259,9 +259,11 @@ sudo docker exec -it {container-id} bash
 
 ```
 
+A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 2 simultaneous sequencing runs being uploaded from 2 separate sequencers. One is expected to succeed (`A01295`) and one should fail due to incomplete cycles (`A01303`). To run this, the same commands as above should be run to build and run the image. To then start the test do the following: `docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}"`
+
 **Notes on Docker**
 - Image is created with a user `dx-upload' in the image for running the upload, working dir is `/home/dx-upload/`
-- A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 2 simultaneous sequencing runs being uploaded from 2 separate sequencers. One is expected to succeed (`A01295`) and one should fail due to incomplete cycles (`A01303`). To run this, the same commands as above should be run to build and run the image. To then start the test do the following: `docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}"`
+
 
 
 License
