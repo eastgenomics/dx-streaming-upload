@@ -13,7 +13,8 @@ RUN cron
 # add a user to run uploads with
 RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload
 RUN chown -R 1005 /opt/
-RUN chown -R 1005 /var/lock/
+RUN chmod 777 /var/lock/
+RUN chmod -R 777 /home/dx-upload/
 RUN su - dx-upload
 
 # copy in dx-streaming-upload
