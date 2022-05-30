@@ -10,7 +10,8 @@ RUN pip3 install --upgrade --ignore-installed pyyaml dxpy beautifulsoup4 lxml
 
 RUN cron
 
-# add a user to run uploads with
+# add a user to run uploads with, set permissions so both user and root
+# can run uploads as user
 RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload
 RUN chown -R 1005 /opt/
 RUN chmod 777 /var/lock/
