@@ -4,10 +4,9 @@ FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt install ansible cron rsyslog software-properties-common git nano python3 python3-dev python3-pip -y
+RUN apt install ansible cron rsyslog software-properties-common git nano python3 python3-dev python3-pip sudo -y
 RUN python3 -m pip install --upgrade pip
-RUN pip3 install --upgrade --ignore-installed pyyaml
-RUN pip3 install dxpy beautifulsoup4 lxml
+RUN pip3 install --upgrade --ignore-installed pyyaml dxpy beautifulsoup4 lxml
 
 RUN cron
 
@@ -20,6 +19,11 @@ RUN su - dx-upload
 # copy in dx-streaming-upload
 COPY . /home/dx-upload/dx-streaming-upload
 COPY . /opt/dx-streaming-upload
+
+# comment out lines that install dx requirements on running since they are installed above
+RUN sed -i '3s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
+RUN sed -i '4s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
+RUN sed -i '5s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
 
 # allow dx-upload user to run cron jobs
 RUN touch /var/run/crond.pid
