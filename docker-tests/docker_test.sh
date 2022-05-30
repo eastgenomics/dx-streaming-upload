@@ -16,14 +16,31 @@ main() {
     cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/test-playbook-template.yml | \
         sed -r "s/(upload_project:).*/\1 $1/g" > /home/dx-upload/dx-streaming-upload/docker-tests/test-playbook.yml
 
-    # add slack token and proxy to /etc/environment for cron to access
-    if [ ! $(grep 'SLACK' /etc/environment) ]; then
-        printenv | grep SLACK >> /etc/environment
+    if [[ -z $2 ]]; then
+        printf "\ndx project and/or token not provided\n"
+        printf "\nscript must be run as bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}\n"
+        printf "\n\nExiting now\n"
+        exit 1
     fi
 
-    if [ ! $(grep 'proxy' /etc/environment) ]; then
-        printenv | grep -i proxy >> /etc/environment
-    fi
+    # add slack token and proxy to /etc/environment for cron to access
+    printenv | grep SLACK >> /etc/environment
+    echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment
+    echo "HTTPS_PROXY=${HTTPS_PROXY}" >> /etc/environment
+    echo "http_proxy=${http_proxy}" >> /etc/environment
+    echo "https_proxy=${https_proxy}" >> /etc/environment
+
+    # printenv | grep -i proxy >> /etc/environment
+    # slack=$(grep 'SLACK' /etc/environment)
+    # if [[ -z "$slack" ]]; then
+    #     printf "Addign slack token to /etc"
+    #     printenv | grep SLACK >> /etc/environment
+    # fi
+
+    # proxy=$(grep -i 'proxy' /etc/environment)
+    # if [[ -z "$proxy" ]]; then
+    #     printenv | grep -i proxy >> /etc/environment
+    # fi
 
     A01295="A01295_${RANDOM}_test_upload"
     A01303="A01303_${RANDOM}_test_upload"
@@ -66,5 +83,5 @@ main() {
     printf "\nDone! The docker container should now be running, and uploads starting for 2 test uploads.\n"
     printf "A01295 should upload successfully, and A01303 should fail due to incomplete run cycle dirs.\n"
 }
-
+printf '\nStarting test script\n'
 main "$1" "$2"
