@@ -101,13 +101,13 @@ class checkCycles():
         if not completed:
             # at least one lane not completed all cycles
             message = f"\n\t".join([
-                f"\t\t\t\t\t{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
+                f"\t\t\t\t{x}\t:\t{y}" for x, y in zip(lanes, max_cycles)
             ])
             message = (
                 f"Total sequencing cycles do not appear to have completed.\n"
                 f"Expected cycles: *{cycle_count}*\n\n"
-                f"Cycles found:"
-                f"\tLane\t\tCycles\n\n\t{message}"
+                f"Cycles found:\n\n"
+                f"\t\t\t\t\tLane\t\tCycles\n\n\t{message}"
             )
             slack().send(message=message, run=self.run_dir, alert=True)
 

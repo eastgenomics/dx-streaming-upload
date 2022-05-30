@@ -147,6 +147,7 @@ def parse_args():
 
     return args
 
+
 def check_input(args):
     dxpy.set_security_context({
                 "auth_token_type": "Bearer",
@@ -245,7 +246,7 @@ def get_run_id(run_dir, sequencer):
     except:
         raise_error(
             "Could not extract run id from RunInfo.xml",
-            send=True, run_id=sequencer
+            send=True, run_id=Path(run_dir).name
         )
 
 
@@ -256,7 +257,7 @@ def get_target_folder(base, lane):
         return base.rstrip("/") + "/" + lane
 
 
-def run_command_with_retry(my_num_retries, my_command, sequencer):
+def run_command_with_retry(my_num_retries, my_command, run_dir):
     for trys in range(my_num_retries):
         print_stderr("Running (Try %d of %d): %s" %
                 (trys, my_num_retries, my_command))
@@ -271,7 +272,7 @@ def run_command_with_retry(my_num_retries, my_command, sequencer):
 
     raise_error(
         "Number of retries exceed %d. Please check logs to troubleshoot issues." % my_num_retries,
-        send=True, run_id=sequencer
+        send=True, run_id=Path(run_dir).name
         )
 
 
@@ -289,7 +290,7 @@ def raise_error(msg, send=False, run_id=''):
     run_id : str
         ID of run, or ID of sequencer when run has not started / can't be parsed
     """
-    print_stderr("ERROR: %s" % msg)
+    print_stderr(f"[incremental_upload.py] ERROR: {msg}", file=sys.stderr)
     if send:
         try:
             slack().send(message=msg, run=run_id, alert=True)
@@ -320,7 +321,7 @@ def upload_single_file(filepath, project, folder, properties):
 
         return f.id
 
-    except dxpy. DXError as e:
+    except dxpy.DXError as e:
         print_stderr(
             "Failed to upload local file %s to %s:%s" %(filepath, project, folder),
         )
@@ -373,7 +374,7 @@ def run_sync_dir(lane, args, finish=False):
     invocation.append(args.run_dir)
 
     output = run_command_with_retry(
-        args.retries, invocation, args.sequencer_id
+        args.retries, invocation, args.run_dir
     )
     return output.split()
 
@@ -398,15 +399,28 @@ def main():
         f"({round(usage[1] / usage[0] * 100, 2)}%)"
     )
 
-    try:
-        slack().send(
-            message=(
-                f":arrow_up: dx-streaming-upload: starting upload of run "
-                f"*{run_id}*\n\t\t{usage}"
-            ), run=run_id, log=True
-        )
-    except Exception as e:
-        print_stderr(f"Error sending slack message: {e}")
+    # tmp file to log if start notifcation has been sent
+    # open and close to create file in case its the first time
+    notify_log = f'{args.sequencer_id}.start_notify.log'
+    open(notify_log, 'a').close()
+
+    with open(notify_log) as fh:
+        log = ' '.join(fh.readlines())
+
+    if not args.run_dir in log:
+        # first time trying upload
+        try:
+            slack().send(
+                message=(
+                    f":upload-cloud: dx-streaming-upload: starting upload of run "
+                    f"*{run_id}*\n\t\t{usage}"
+                ), run=run_id, log=True
+            )
+            with open(notify_log, 'a') as fh:
+                # notification sent, add run to log
+                fh.write(f"{args.run_dir}\n")
+        except Exception as e:
+            print_stderr(f"Error sending slack message: {e}")
 
     # timing upload
     start = time.perf_counter()
