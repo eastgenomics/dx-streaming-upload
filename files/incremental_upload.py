@@ -290,7 +290,7 @@ def raise_error(msg, send=False, run_id=''):
     run_id : str
         ID of run, or ID of sequencer when run has not started / can't be parsed
     """
-    print_stderr(f"[incremental_upload.py] ERROR: {msg}", file=sys.stderr)
+    print_stderr(f"[incremental_upload.py] ERROR: {msg}")
     if send:
         try:
             slack().send(message=msg, run=run_id, alert=True)
@@ -401,7 +401,7 @@ def main():
 
     # tmp file to log if start notifcation has been sent
     # open and close to create file in case its the first time
-    notify_log = f'{args.sequencer_id}.start_notify.log'
+    notify_log = f"{args.sequencer_id}.start_notify.log".strip('"\'')
     open(notify_log, 'a').close()
 
     with open(notify_log) as fh:
@@ -409,20 +409,20 @@ def main():
 
     if not args.run_dir in log:
         # first time trying upload
+        with open(notify_log, 'a') as fh:
+            # add run to log to not send another notification
+            fh.write(f"{args.run_dir}\n")
         try:
             slack().send(
                 message=(
-                    f":upload-cloud: dx-streaming-upload: starting upload of run "
-                    f"*{run_id}*\n\t\t{usage}"
+                    f":upload-cloud: dx-streaming-upload: starting upload of "
+                    f"run *{run_id}*\n\t\t{usage}"
                 ), run=run_id, log=True
             )
-            with open(notify_log, 'a') as fh:
-                # notification sent, add run to log
-                fh.write(f"{args.run_dir}\n")
         except Exception as e:
             print_stderr(f"Error sending slack message: {e}")
 
-    # timing upload
+    # timing upload for final upload message
     start = time.perf_counter()
 
     # Set all naming conventions

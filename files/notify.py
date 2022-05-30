@@ -56,8 +56,8 @@ class slack():
         else:
             channel = self.slack_alert_channel
             message = (
-                f":warning: *Error in dx-streaming-upload:*\n\n"
-                f"Run: *{run}*\n\n{message}"
+                f":warning: *Error in dx-streaming-upload*\n\n"
+                f"Run: *{run}*\n\nError: {message}"
             )
 
         print(
