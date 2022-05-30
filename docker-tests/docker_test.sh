@@ -26,9 +26,9 @@ main() {
     # add slack token and proxy to /etc/environment for cron to access
     printenv | grep SLACK >> /etc/environment
     echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment
-    echo "HTTPS_PROXY=${HTTPS_PROXY}" >> /etc/environment
+    echo "HTTPS_PROXY=${HTTP_PROXY}" >> /etc/environment
     echo "http_proxy=${http_proxy}" >> /etc/environment
-    echo "https_proxy=${https_proxy}" >> /etc/environment
+    echo "https_proxy=${http_proxy}" >> /etc/environment
 
     # printenv | grep -i proxy >> /etc/environment
     # slack=$(grep 'SLACK' /etc/environment)

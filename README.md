@@ -263,6 +263,8 @@ A test script has been written (`docker-tests/docker_test.sh`) to check dx-strea
 
 **Notes on Docker**
 - Image is created with a user `dx-upload' in the image for running the upload, working dir is `/home/dx-upload/`
+- A minimum of read permissions on the monitored directories and write permission on the `local_tar_directory`. Read/write permission must also be given on any bind mounted directories that may also be written to (i.e. if `local_log_directory` if this is mounted outside of the container (e.g. bound to `/var/log`))
+- If a proxy is required for uploading to DNAnexus, this will need to be set to the container environment with either the env file, or `-e/--env` argument. In addition, cron can not access the running users env variables, one way to address this is by adding the http/https proxy addresses to `/etc/envrionment`. An example command to do this is `echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment`.
 
 
 
