@@ -52,6 +52,7 @@ main() {
     printf "\nCreating example directory structure...\n"
     mkdir -p /home/dx-upload/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1
     mkdir -p /home/dx-upload/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1
+    mkdir -p /home/dx-upload/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1
 
     # going to create RTAComplete.txt and CopyComplete.txt so it can test for both NovaSeq True/False
     # in config, in practice only one will be written and checked for in incremental_upload.py
@@ -78,7 +79,8 @@ main() {
     # create some files with enough size (2GB each) to trigger an upload
     printf "\nCreating test files...\n\n"
     dd if=/dev/urandom of=/home/dx-upload/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=1000 count=2000000
-    dd if=/dev/urandom of=/home/dx-upload/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=1000 count=2000000
+    dd if=/dev/urandom of=/home/dx-upload/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=1000 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1/output.dat  bs=1000 count=1000000
 
     printf "\nDone! The docker container should now be running, and uploads starting for 2 test uploads.\n"
     printf "A01295 should upload successfully, and A01303 should fail due to incomplete run cycle dirs.\n"
