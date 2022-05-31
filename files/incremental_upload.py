@@ -402,7 +402,6 @@ def main():
     # tmp file to log if start notifcation has been sent
     # open and close to create file in case its the first time
     notify_log = f"{args.sequencer_id}.start_notify.log".strip('"\'')
-    open(notify_log, 'a').close()
 
     with open(notify_log) as fh:
         log = ' '.join(fh.readlines())

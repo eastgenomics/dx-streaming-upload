@@ -76,6 +76,12 @@ class slack():
                 'text': message
             }).json()
 
+        if not response['ok']:
+            # error in sending slack notification
+            print(
+                f"Error in sending slack notification: {response.get('error')}"
+            )
+
 
 class checkCycles():
     """

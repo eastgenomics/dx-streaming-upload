@@ -30,17 +30,6 @@ main() {
     echo "http_proxy=${http_proxy}" >> /etc/environment
     echo "https_proxy=${http_proxy}" >> /etc/environment
 
-    # printenv | grep -i proxy >> /etc/environment
-    # slack=$(grep 'SLACK' /etc/environment)
-    # if [[ -z "$slack" ]]; then
-    #     printf "Addign slack token to /etc"
-    #     printenv | grep SLACK >> /etc/environment
-    # fi
-
-    # proxy=$(grep -i 'proxy' /etc/environment)
-    # if [[ -z "$proxy" ]]; then
-    #     printenv | grep -i proxy >> /etc/environment
-    # fi
 
     A01295="A01295_${RANDOM}_test_upload"
     A01303="A01303_${RANDOM}_test_upload"

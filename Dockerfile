@@ -23,9 +23,7 @@ COPY . /home/dx-upload/dx-streaming-upload
 COPY . /opt/dx-streaming-upload
 
 # comment out lines that install dx requirements on running since they are installed above
-RUN sed -i '3s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
-RUN sed -i '4s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
-RUN sed -i '5s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
+RUN sed -i '3,5s%^%#%' /home/dx-upload/dx-streaming-upload/tasks/main.yml
 
 # allow dx-upload user to run cron jobs
 RUN touch /var/run/crond.pid
