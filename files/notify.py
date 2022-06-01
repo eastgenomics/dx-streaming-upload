@@ -69,17 +69,22 @@ class slack():
         retries = Retry(total=5, backoff_factor=10, method_whitelist=['POST'])
         http.mount("https://", HTTPAdapter(max_retries=retries))
 
-        response = http.post(
-            'https://slack.com/api/chat.postMessage', {
-                'token': self.slack_token,
-                'channel': f"#{channel}",
-                'text': message
-            }).json()
+        try:
+            response = http.post(
+                'https://slack.com/api/chat.postMessage', {
+                    'token': self.slack_token,
+                    'channel': f"#{channel}",
+                    'text': message
+                }).json()
 
-        if not response['ok']:
-            # error in sending slack notification
+            if not response['ok']:
+                # error in sending slack notification
+                print(
+                    f"Error in sending slack notification: {response.get('error')}"
+                )
+        except Exception as err:
             print(
-                f"Error in sending slack notification: {response.get('error')}"
+                f"Error in sending post request for slack notification: {err}"
             )
 
 
