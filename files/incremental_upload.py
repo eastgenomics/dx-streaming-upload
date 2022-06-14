@@ -403,7 +403,7 @@ def main():
     # open and close to create file in case its the first time
     notify_log = f"{args.sequencer_id}.start_notify.log".strip('"\'')
 
-    with open(notify_log) as fh:
+    with open(notify_log, 'a+') as fh:
         log = ' '.join(fh.readlines())
 
     if not args.run_dir in log:
