@@ -16,6 +16,8 @@ RUN useradd -m dx-upload -u 1005 -s /bin/bash -d /home/dx-upload
 RUN chown -R 1005 /opt/
 RUN chmod 777 /var/lock/
 RUN chmod -R 777 /home/dx-upload/
+RUN mkdir -p /var/log/dx-streaming-upload
+RUN chmod 777 /var/log/dx-streaming-upload
 RUN su - dx-upload
 
 # copy in dx-streaming-upload
