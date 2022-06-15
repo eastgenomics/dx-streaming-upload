@@ -625,6 +625,11 @@ def main():
 
     print_stderr("Run %s successfully streamed!" % (run_id))
 
+    # calculate total time and disk usage
+    end = time.perf_counter()
+    upload_minutes = ceil((round(end) - round(start)) / 60)
+    total_time = f"{upload_minutes // 60}h{upload_minutes % 60}m"
+
     # check if anything failed in sequencing (i.e. incomplete cycles) but uploaded
     complete = checkCycles(run_dir=args.run_dir).check()
 
@@ -637,10 +642,6 @@ def main():
             ), send=False, run=run_id
         )
 
-    # calculate total time and disk usage
-    end = time.perf_counter()
-    upload_minutes = ceil((round(end) - round(start)) / 60)
-    total_time = f"{upload_minutes // 60}h{upload_minutes % 60}m"
 
     # calculate disk usage of run and total space
     run_size = round(sum(
