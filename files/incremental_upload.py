@@ -505,16 +505,12 @@ def main():
         # Upload samplesheet unless samplesheet-delay is specified or it is
         # already uploaded. First find samplesheet using regex so does not
         # have to be named exactly 'SampleSheet.csv'
-        print_stderr("Checking for samplesheet...")
-        print("Checking for samplesheet (stdout)")
-        print("Checking for samplesheet w message", file=sys.stderr)
         files = os.listdir(args.run_dir)
         files = [
             re.search('.*sample[-_ ]?sheet.*.csv$', x, re.IGNORECASE) for x in files
         ]
         files = [x.group(0) for x in files if x]
         print_stderr(f"Found samplesheet(s): {files}")
-        print(f"stdout: found samplesheets: {files}")
 
         # should just be one file, if none print error, if more than one print
         # error and select first (should never be more than one match)
