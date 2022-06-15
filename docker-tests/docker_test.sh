@@ -39,23 +39,23 @@ main() {
     # create cycle dirs, notify.py gets the highest in /Data/Intensities/Basecalls
     # so just create one to match
     printf "\nCreating example directory structure...\n"
-    mkdir -p /genetics/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1
-    mkdir -p /genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1
-    mkdir -p /genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1
+    mkdir -p /home/dx-upload/test_runs/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1
+    mkdir -p /home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1
+    mkdir -p /home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1
 
     # going to create RTAComplete.txt and CopyComplete.txt so it can test for both NovaSeq True/False
     # in config, in practice only one will be written and checked for in incremental_upload.py
-    touch /genetics/A01295/${A01295}/SampleSheet.csv \
-          /genetics/A01295/${A01295}/RTAComplete.txt \
-          /genetics/A01295/${A01295}/CopyComplete.txt
+    touch /home/dx-upload/test_runs/A01295/${A01295}/SampleSheet.csv \
+          /home/dx-upload/test_runs/A01295/${A01295}/RTAComplete.txt \
+          /home/dx-upload/test_runs/A01295/${A01295}/CopyComplete.txt
 
-    touch /genetics/A01303/${A01303}/SampleSheet.csv \
-          /genetics/A01303/${A01303}/RTAComplete.txt \
-          /genetics/A01303/${A01303}/CopyComplete.txt
+    touch /home/dx-upload/test_runs/A01303/${A01303}/SampleSheet.csv \
+          /home/dx-upload/test_runs/A01303/${A01303}/RTAComplete.txt \
+          /home/dx-upload/test_runs/A01303/${A01303}/CopyComplete.txt
 
     # create RunInfo.xml files with IDs added
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295}\">/g" > /genetics/A01295/${A01295}/RunInfo.xml
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303}\">/g" > /genetics/A01303/${A01303}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295}\">/g" > /home/dx-upload/test_runs/A01295/${A01295}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303}\">/g" > /home/dx-upload/test_runs/A01303/${A01303}/RunInfo.xml
 
     # trigger Ansible
     printf "\n\nStarting dx-streaming-upload\n\n"
@@ -67,9 +67,9 @@ main() {
 
     # create some files with enough size (2GB each) to trigger an upload
     printf "\nCreating test files...\n\n"
-    dd if=/dev/urandom of=/genetics/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=1000 count=2000000
-    dd if=/dev/urandom of=/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=1000 count=1000000
-    dd if=/dev/urandom of=/genetics/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1/output.dat  bs=1000 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=1000 count=2000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=1000 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1/output.dat  bs=1000 count=1000000
 
     printf "\nDone! The docker container should now be running, and uploads starting for 2 test uploads.\n"
     printf "A01295 should upload successfully, and A01303 should fail due to incomplete run cycle dirs.\n"
