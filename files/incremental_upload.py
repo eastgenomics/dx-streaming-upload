@@ -634,7 +634,7 @@ def main():
             (
                 f'Incomplete cycles for uploaded run: *{run_id}*.\n'
                 f'Stopping and not running any downstream analysis.'
-            ), send=False, run=args.run_id
+            ), send=False, run=run_id
         )
 
     # calculate total time and disk usage
