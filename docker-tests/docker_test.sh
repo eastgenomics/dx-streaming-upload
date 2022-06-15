@@ -45,11 +45,13 @@ main() {
 
     # going to create RTAComplete.txt and CopyComplete.txt so it can test for both NovaSeq True/False
     # in config, in practice only one will be written and checked for in incremental_upload.py
-    touch /home/dx-upload/test_runs/A01295/${A01295}/SampleSheet.csv \
+    # using malformed samplesheet names to test regex matching and uploading
+    touch /home/dx-upload/test_runs/A01295/${A01295}/samplesheet_for_run_A01295_${A01295}.csv \
           /home/dx-upload/test_runs/A01295/${A01295}/RTAComplete.txt \
           /home/dx-upload/test_runs/A01295/${A01295}/CopyComplete.txt
 
     touch /home/dx-upload/test_runs/A01303/${A01303}/SampleSheet.csv \
+          /home/dx-upload/test_runs/A01303/${A01303}/SampleSheetDuplicate.csv \
           /home/dx-upload/test_runs/A01303/${A01303}/RTAComplete.txt \
           /home/dx-upload/test_runs/A01303/${A01303}/CopyComplete.txt
 
