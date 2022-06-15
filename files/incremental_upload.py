@@ -300,7 +300,7 @@ def raise_error(msg, send=False, run_id=''):
 
 
 def print_stderr(msg):
-    print ("[incremental_upload.py] %s" % msg, file=sys.stderr)
+    print("[incremental_upload.py] %s" % msg, file=sys.stderr)
 
 
 def upload_single_file(filepath, project, folder, properties):
@@ -429,7 +429,7 @@ def main():
     REMOTE_READS_FOLDER = "/" + run_id + "/reads"
     REMOTE_ANALYSIS_FOLDER = "/" + run_id + "/analyses"
 
-    FILE_PREFIX = "run." + run_id+ ".lane."
+    FILE_PREFIX = "run." + run_id + ".lane."
 
     # Prep log & record names
     lane_info = []
@@ -488,7 +488,12 @@ def main():
         record = lane["dxrecord"]
         properties = record.get_properties()
 
-        runInfo = dxpy.find_one_data_object(zero_ok=True, name="RunInfo.xml", project=args.project, folder=lane["remote_folder"])
+        runInfo = dxpy.find_one_data_object(
+            zero_ok=True,
+            name="RunInfo.xml",
+            project=args.project,
+            folder=lane["remote_folder"]
+        )
         if not runInfo:
             lane["runinfo_file_id"] = upload_single_file(
                 args.run_dir + "/RunInfo.xml", args.project,
@@ -497,11 +502,50 @@ def main():
         else:
             lane["runinfo_file_id"] = runInfo["id"]
 
-        # Upload samplesheet unless samplesheet-delay is specified or it is already uploaded.
+        # Upload samplesheet unless samplesheet-delay is specified or it is
+        # already uploaded. First find samplesheet using regex so does not
+        # have to be named exactly 'SampleSheet.csv'
+        print_stderr("Checking for samplesheet...")
+        print("Checking for samplesheet (stdout)")
+        print("Checking for samplesheet w message", file=sys.stderr)
+        files = os.listdir(args.run_dir)
+        files = [
+            re.search('.*sample[-_ ]?sheet.*.csv$', x, re.IGNORECASE) for x in files
+        ]
+        files = [x.group(0) for x in files if x]
+        print_stderr(f"Found samplesheet(s): {files}")
+        print(f"stdout: found samplesheets: {files}")
+
+        # should just be one file, if none print error, if more than one print
+        # error and select first (should never be more than one match)
+        if len(files) == 0:
+            print_stderr("No samplesheet found, continuing...")
+
+            # call the samplesheet default name even though missing, will try
+            # and upload with upload_single_file() whcih will print error and
+            # continue
+            local_sample_sheet = 'SampleSheet.csv'
+        else:
+            if len(files) > 1:
+                print_stderr(
+                    f"More than one samplesheet match found: {files}.\n"
+                    "Selecting first and continuing..."
+                )
+            local_sample_sheet = files[0]
+
         if not args.samplesheet_delay:
-            sampleSheet = dxpy.find_one_data_object(zero_ok=True, name="SampleSheet.csv", project=args.project, folder=lane["remote_folder"])
+            print("Uploading samplesheet")
+            sampleSheet = dxpy.find_one_data_object(
+                zero_ok=True, name=local_sample_sheet,
+                project=args.project,
+                folder=lane["remote_folder"]
+            )
             if not sampleSheet:
-                lane["samplesheet_file_id"] = upload_single_file(args.run_dir + "/SampleSheet.csv", args.project, lane["remote_folder"], properties)
+                lane["samplesheet_file_id"] = upload_single_file(
+                    os.path.join(args.run_dir, local_sample_sheet),
+                    args.project, lane["remote_folder"],
+                    properties
+                )
             else:
                 lane["samplesheet_file_id"] = sampleSheet["id"]
 
@@ -564,8 +608,12 @@ def main():
 
         # Upload sample sheet here, if samplesheet-delay specified
         if args.samplesheet_delay:
-            lane["samplesheet_file_id"] = upload_single_file(args.run_dir + "/SampleSheet.csv", args.project,
-                                            lane["remote_folder"], properties)
+            lane["samplesheet_file_id"] = upload_single_file(
+                os.path.join(args.run_dir, local_sample_sheet),
+                args.project,
+                lane["remote_folder"],
+                properties
+            )
 
         # ID to singly uploaded file (when uploaded successfully)
         if lane.get("log_file_id"):
