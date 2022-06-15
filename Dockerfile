@@ -20,10 +20,6 @@ RUN mkdir -p /var/log/dx-streaming-upload
 RUN chmod 777 /var/log/dx-streaming-upload
 RUN su - dx-upload
 
-# create a dir with permissions to bind host data dir to, playbooks can refer to here
-RUN mkdir -p /genetics
-RUN chmod 777 /genetics
-
 # copy in dx-streaming-upload
 COPY . /home/dx-upload/dx-streaming-upload
 COPY . /opt/dx-streaming-upload
