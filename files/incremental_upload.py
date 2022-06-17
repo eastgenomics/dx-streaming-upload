@@ -14,7 +14,7 @@ from math import ceil
 from pathlib import Path
 from shutil import disk_usage
 
-from notify import slack, checkCycles
+from notify import Slack, CheckCycles
 
 # Uploads an Illumina run directory (HiSeq 2500, HiSeq X, NextSeq)
 # If for use with a MiSeq, users MUST change the config files to include and NOT specify the -l argument
@@ -142,7 +142,7 @@ def parse_args():
     # Ensure min < max
     if args.min_size > args.max_size:
         raise_error(
-            "--min-size input must be less than --max-size", send=False
+            "--min-size input must be less than --max-size", send=False, run=''
         )
 
     return args
@@ -160,17 +160,17 @@ def check_input(args):
         if e.name == "InvalidAuthentication":
             raise_error(
                 "API token (%s) is not valid. %s" % (args.api_token, e),
-                send=True, run_id=args.sequencer_id
+                send=True, run=args.sequencer_id
             )
         if e.name == "PermissionDenied":
             raise_error(
                 "Project (%s) is not valid. %s" % (args.project, e),
-                send=True, run_id=args.sequencer_id
+                send=True, run=args.sequencer_id
             )
     except dxpy.exceptions.DXError as e:
         raise_error(
             "Error getting project handler for project (%s). %s" %
-            (args.project, e), send=True, run_id=args.sequencer_id
+            (args.project, e), send=True, run=args.sequencer_id
         )
 
     # Check that chained downstream applet is valid
@@ -180,12 +180,12 @@ def check_input(args):
         except dxpy.exceptions.DXAPIError as e:
             raise_error(
                 "Unable to resolve applet %s. %s" %(args.applet, e),
-                send=True, run_id=args.sequencer_id
+                send=True, run=args.sequencer_id
             )
         except dxpy.exceptions.DXError as e:
             raise_error(
                 "Error getting handler for applet (%s). %s" %(args.applet, e),
-                send=True, run_id=args.sequencer_id
+                send=True, run=args.sequencer_id
             )
 
     # Check that chained downstream workflow is valid
@@ -195,19 +195,20 @@ def check_input(args):
         except dxpy.exceptions.DXAPIError as e:
             raise_error(
                 "Unable to resolve workflow %s. %s" %(args.workflow, e),
-                send=True, run_id=args.sequencer_id
+                send=True, run=args.sequencer_id
             )
         except dxpy.exceptions.DXError as e:
             raise_error(
                 "Error getting handler for workflow (%s). %s" %(args.workflow, e),
-                send=True, run_id=args.sequencer_id
+                send=True, run=args.sequencer_id
             )
 
     # Check that executable to launch locally is executable
     if args.script:
         if not (os.path.isfile(args.script) and os.access(args.script, os.X_OK)):
             raise_error(
-                "Executable/script passed by -s: (%s) is not executable" %(args.script)
+                "Executable/script passed by -s: (%s) is not executable" %(args.script),
+                send=False, run=''
             )
 
     if not args.dxpy_upload:
@@ -216,7 +217,10 @@ def check_input(args):
             sub.check_call(['ua', '--version'],
                     stdout=open(os.devnull, 'w'), close_fds=True)
         except sub.CalledProcessError:
-            raise_error("Upload agent executable 'ua' was not found in the $PATH")
+            raise_error(
+                "Upload agent executable 'ua' was not found in the $PATH",
+                send=False, run=''
+            )
 
     try:
         # We assume that dx_sync_directory is located in the same folder as this script
@@ -224,9 +228,11 @@ def check_input(args):
         sub.check_call(['python3', '{curr_dir}/dx_sync_directory.py'.format(curr_dir=sys.path[0]), '-h'],
                 stdout=open(os.devnull, 'w'), close_fds=True)
     except sub.CalledProcessError:
-        raise_error("dx_sync_directory.py not found. Please run incremental " +
-                "upload from the directory containing incremental_upload.py "+
-                "and dx_sync_directory.py")
+        raise_error(
+            "dx_sync_directory.py not found. Please run incremental " +
+            "upload from the directory containing incremental_upload.py "+
+            "and dx_sync_directory.py", send=False, run=''
+    )
 
 
 def get_run_id(run_dir, sequencer):
@@ -234,7 +240,7 @@ def get_run_id(run_dir, sequencer):
     if os.path.isfile(runinfo_xml) == False:
         raise_error(
             "File RunInfo.xml not found in %s" % (run_dir),
-            send=True, run_id=sequencer
+            send=True, run=sequencer
         )
     try:
         tree = ET.parse(runinfo_xml)
@@ -246,7 +252,7 @@ def get_run_id(run_dir, sequencer):
     except:
         raise_error(
             "Could not extract run id from RunInfo.xml",
-            send=True, run_id=Path(run_dir).name
+            send=True, run=Path(run_dir).name
         )
 
 
@@ -272,11 +278,11 @@ def run_command_with_retry(my_num_retries, my_command, run_dir):
 
     raise_error(
         "Number of retries exceed %d. Please check logs to troubleshoot issues." % my_num_retries,
-        send=True, run_id=Path(run_dir).name
+        send=True, run=Path(run_dir).name
         )
 
 
-def raise_error(msg, send=False, run_id=''):
+def raise_error(msg, send, run):
     """
     Prints error message and exit, and also optionally send a notification
     via Slack
@@ -293,7 +299,7 @@ def raise_error(msg, send=False, run_id=''):
     print_stderr(f"[incremental_upload.py] ERROR: {msg}")
     if send:
         try:
-            slack().send(message=msg, run=run_id, alert=True)
+            Slack().send(message=msg, run=run, alert=True)
         except Exception as e:
             print_stderr(f'Error in sending slack alert:\n{e}')
     sys.exit()
@@ -412,7 +418,7 @@ def main():
             # add run to log to not send another notification
             fh.write(f"{args.run_dir}\n")
         try:
-            slack().send(
+            Slack().send(
                 message=(
                     f":upload-cloud: dx-streaming-upload: starting upload of "
                     f"run *{run_id}*\n\t\t{usage}"
@@ -464,7 +470,7 @@ def main():
             raise_error(
                 "Encountered an error looking for %s at %s:%s. %s" % (
                     lane["record_name"], lane["remote_folder"], args.project, e
-                ), send=True, run_id=run_id
+                ), send=True, run=run_id
             )
 
         if old_record:
@@ -512,6 +518,9 @@ def main():
         files = [x.group(0) for x in files if x]
         print_stderr(f"Found samplesheet(s): {files}")
 
+        # flag to stop downstream analysis if more than one samplesheet found
+        halt_downstream = False
+
         # should just be one file, if none print error, if more than one print
         # error and select first (should never be more than one match)
         if len(files) == 0:
@@ -523,13 +532,21 @@ def main():
             local_sample_sheet = 'SampleSheet.csv'
         else:
             if len(files) > 1:
-                print_stderr(
-                    f"More than one samplesheet match found: {files}.\n"
-                    "Selecting first and continuing..."
+                # more than one found, continue the upload but stop any
+                # downstream analysis since we don't know which is correct
+                halt_downstream = True
+                sheets = ' '.join([f"\n- *{x}*" for x in files])
+                Slack().send(
+                    message=(
+                        f"more than one samplesheet found:\n{sheets}\n\n"
+                        "Uploading will continue but no downstream analysis "
+                        "will be run."
+                    ), run=run_id, alert=True
                 )
+
             local_sample_sheet = files[0]
 
-        if not args.samplesheet_delay:
+        if not args.samplesheet_delay and not halt_downstream:
             print("Uploading samplesheet")
             sampleSheet = dxpy.find_one_data_object(
                 zero_ok=True, name=local_sample_sheet,
@@ -561,7 +578,7 @@ def main():
         if run_time > seconds_to_wait:
             raise_error(
                 "EXITING: Upload failed. Run did not complete after %d seconds (max wait = %ds)" %(run_time, seconds_to_wait),
-                send=True, run_id=run_id
+                send=True, run=run_id
                 )
 
         # Loop through all lanes in run directory
@@ -603,7 +620,7 @@ def main():
             }
 
         # Upload sample sheet here, if samplesheet-delay specified
-        if args.samplesheet_delay:
+        if args.samplesheet_delay and not halt_downstream:
             lane["samplesheet_file_id"] = upload_single_file(
                 os.path.join(args.run_dir, local_sample_sheet),
                 args.project,
@@ -630,19 +647,6 @@ def main():
     upload_minutes = ceil((round(end) - round(start)) / 60)
     total_time = f"{upload_minutes // 60}h{upload_minutes % 60}m"
 
-    # check if anything failed in sequencing (i.e. incomplete cycles) but uploaded
-    complete = checkCycles(run_dir=args.run_dir).check()
-
-    if not complete:
-        # completed run with missing cycles, stop any downstream analysis
-        raise_error(
-            (
-                f'Incomplete cycles for uploaded run: *{run_id}*.\n'
-                f'Stopping and not running any downstream analysis.'
-            ), send=False, run=run_id
-        )
-
-
     # calculate disk usage of run and total space
     run_size = round(sum(
         file.stat().st_size
@@ -656,8 +660,34 @@ def main():
         f"({round(float(usage[1]) / float(usage[0]) * 100, 2)}%)"
     )
 
+    # check if anything failed in sequencing (i.e. incomplete cycles) but uploaded
+    complete = CheckCycles(run_dir=args.run_dir).check()
+
+    if not complete:
+        # completed run with missing cycles, stop any downstream analysis
+        raise_error(
+            (
+                f'Incomplete cycles for uploaded run: *{run_id}*.\n'
+                f'Stopping and not running any downstream analysis.'
+            ), send=False, run=run_id
+        )
+
+    if halt_downstream:
+        # stopping downstream analysis as more than one samplesheet found
+        # send another alert
+        raise_error(
+            (
+                f"Run has successfully loaded but more than one samplesheet "
+                f"was found:\n{sheets}\n\n. No downstream analysis will be "
+                f"run.\n\nUpload summary:\n"
+                f"\t\t\tTotal upload time: {total_time}\n"
+                f"\t\t\tTotal size of run: {run_size}GB\n"
+                f"\t\t\tDisk usage after upload: {usage}"
+            ), send=True, run=run_id
+        )
+
     # send slack notification to log channel of successful upload
-    slack().send(
+    Slack().send(
         message=(
             f":white_check_mark: dx-streaming-upload: "
             f"run successfully uploaded *{run_id}*\n"
@@ -674,17 +704,20 @@ def main():
         except ValueError as e:
             raise_error(
                 "Failed to read downstream input as JSON string. %s. %s" %(args.downstream_input, e),
-                send=True, run_id=run_id
+                send=True, run=run_id
             )
 
         if not isinstance(input_dict, dict):
-            raise_error("Expected a dict for downstream input. Got %s." %input_dict)
+            raise_error(
+                "Expected a dict for downstream input. Got %s." %input_dict,
+                send=True, run=run_id
+            )
 
         for k, v in list(input_dict.items()):
             if not (isinstance(k, str) and (isinstance(v, str) or isinstance(v, dict))):
                     raise_error(
                         "Expected (string) key and (string or dict) value pairs for downstream input. Got (%s)%s (%s)%s" %(type(k), k, type(v), v),
-                        send=True, run_id=run_id
+                        send=True, run=run_id
                         )
 
             downstream_input[k] = v
@@ -711,7 +744,7 @@ def main():
             except dxpy.DXError as e:
                 raise_error(
                     "Failed to create new folder %s. %s" %(reads_target_folder, e),
-                    send=True, run_id=run_id
+                    send=True, run=run_id
                 )
 
             # Decide on job name (<executable>-<run_id>)
@@ -752,7 +785,7 @@ def main():
             except dxpy.DXError as e:
                 raise_error(
                     "Failed to create new folder %s. %s" %(analyses_target_folder, e),
-                    send=True, run_id=run_id
+                    send=True, run=run_id
                 )
 
             # Decide on job name (<executable>-<run_id>)
@@ -778,7 +811,7 @@ def main():
         except sub.CalledProcessError as e:
             raise_error(
                 "Executable (%s) failed with error %d: %s" %(args.script, e.returncode, e.output),
-                send=True, run_id=run_id
+                send=True, run=run_id
             )
 
 
