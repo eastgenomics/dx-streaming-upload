@@ -265,7 +265,7 @@ sudo docker exec -it {container-id} bash
 
 ```
 
-A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 2 simultaneous sequencing runs being uploaded from 2 separate sequencers. One is expected to succeed (`A01295`) and one should fail due to incomplete cycles (`A01303`). To run this and start the test do the following: 
+A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 3 simultaneous sequencing runs being uploaded from 3 separate sequencers. One is expected to succeed (`A01295`), one should upload and send an alert due to incomplete cycles (`A01303`) and another (`A01625`) should upload and send an alert due to more than one samplesheet. To run this and start the test do the following:
 
 ```
 # build the image
@@ -273,7 +273,6 @@ docker build -t dx-streaming-upload:v1.0.0 .
 
 # run container in background, bind required directories and specify Slack env variables
 docker run -itd \
-  --name dx-streaming-upload \
   -e SLACK_TOKEN="{slack_token}" \
   -e SLACK_LOG_CHANNEL="{slack_log_channel}" \
   -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \

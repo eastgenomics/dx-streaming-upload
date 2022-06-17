@@ -31,33 +31,40 @@ main() {
     echo "https_proxy=${http_proxy}" >> /etc/environment
 
 
-    A01295="A01295_${RANDOM}_test_upload"
-    A01303="A01303_${RANDOM}_test_upload"
+    A01295_1="A01295_${RANDOM}_1_test_upload"
+    A01303_1="A01303_${RANDOM}_1_test_upload"
+    A01625_1="A01625_${RANDOM}_1_test_upload"
 
-    printf "\nCreating test runs:\n\t${A01295}\n\t${A01303}\n"
+    printf "\nCreating test runs:\n\t\t\t${A01295_1}\n\t\t\t${A01303_1}\n\t\t\t${A01625_1}\n"
 
     # create cycle dirs, notify.py gets the highest in /Data/Intensities/Basecalls
     # so just create one to match
     printf "\nCreating example directory structure...\n"
-    mkdir -p /home/dx-upload/test_runs/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1
-    mkdir -p /home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1
-    mkdir -p /home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1
+    mkdir -p /home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1
+    mkdir -p /home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L001/C123.1
+    mkdir -p /home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L002/C166.1
+    mkdir -p /home/dx-upload/test_runs/A01625/${A01625_1}/Data/Intensities/BaseCalls/L001/C318.1
 
     # going to create RTAComplete.txt and CopyComplete.txt so it can test for both NovaSeq True/False
     # in config, in practice only one will be written and checked for in incremental_upload.py
     # using malformed samplesheet names to test regex matching and uploading
-    touch /home/dx-upload/test_runs/A01295/${A01295}/samplesheet_for_run_A01295_${A01295}.csv \
-          /home/dx-upload/test_runs/A01295/${A01295}/RTAComplete.txt \
-          /home/dx-upload/test_runs/A01295/${A01295}/CopyComplete.txt
+    touch /home/dx-upload/test_runs/A01295/${A01295_1}/samplesheet_for_run_A01295_${A01295_1}.csv \
+          /home/dx-upload/test_runs/A01295/${A01295_1}/RTAComplete.txt \
+          /home/dx-upload/test_runs/A01295/${A01295_1}/CopyComplete.txt
 
-    touch /home/dx-upload/test_runs/A01303/${A01303}/SampleSheet.csv \
-          /home/dx-upload/test_runs/A01303/${A01303}/SampleSheetDuplicate.csv \
-          /home/dx-upload/test_runs/A01303/${A01303}/RTAComplete.txt \
-          /home/dx-upload/test_runs/A01303/${A01303}/CopyComplete.txt
+    touch /home/dx-upload/test_runs/A01303/${A01303_1}/SampleSheet.csv \
+          /home/dx-upload/test_runs/A01303/${A01303_1}/RTAComplete.txt \
+          /home/dx-upload/test_runs/A01303/${A01303_1}/CopyComplete.txt
+
+    touch /home/dx-upload/test_runs/A01625/${A01625_1}/SampleSheet.csv \
+          /home/dx-upload/test_runs/A01625/${A01625_1}/SampleSheetDuplicate.csv \
+          /home/dx-upload/test_runs/A01625/${A01625_1}/RTAComplete.txt \
+          /home/dx-upload/test_runs/A01625/${A01625_1}/CopyComplete.txt
 
     # create RunInfo.xml files with IDs added
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295}\">/g" > /home/dx-upload/test_runs/A01295/${A01295}/RunInfo.xml
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303}\">/g" > /home/dx-upload/test_runs/A01303/${A01303}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295_1}\">/g" > /home/dx-upload/test_runs/A01295/${A01295_1}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303_1}\">/g" > /home/dx-upload/test_runs/A01303/${A01303_1}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01625_1}\">/g" > /home/dx-upload/test_runs/A01625/${A01625_1}/RunInfo.xml
 
     # trigger Ansible
     printf "\n\nStarting dx-streaming-upload\n\n"
@@ -69,12 +76,14 @@ main() {
 
     # create some files with enough size (2GB each) to trigger an upload
     printf "\nCreating test files...\n\n"
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=1000 count=2000000
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=1000 count=1000000
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303}/Data/Intensities/BaseCalls/L002/C166.1/output.dat  bs=1000 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01625/${A01625_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=500 count=1000000
 
-    printf "\nDone! The docker container should now be running, and uploads starting for 2 test uploads.\n"
-    printf "A01295 should upload successfully, and A01303 should fail due to incomplete run cycle dirs.\n"
+    printf "\nDone! The docker container should now be running, and uploads starting for 3 test uploads.\n\n"
+    printf "\t\tA01295 should upload successfully\n"
+    printf "\t\tA01303 should upload and send an alert due to incomplete run cycle dirs\n"
+    printf "\t\tA01625 should upload and send an alert for more than one samplesheet\n\n"
 }
 printf '\nStarting test script\n'
 main "$1" "$2"
