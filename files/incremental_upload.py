@@ -677,9 +677,9 @@ def main():
         # send another alert
         raise_error(
             (
-                f"Run has successfully loaded but more than one samplesheet "
-                f"was found:\n{sheets}\n\n. No downstream analysis will be "
-                f"run.\n\nUpload summary:\n"
+                f"Run has successfully uploaded but more than one samplesheet "
+                f"was found:\n{sheets}\n\n No downstream analysis will be "
+                f"run.\n\n*Upload summary*:\n"
                 f"\t\t\tTotal upload time: {total_time}\n"
                 f"\t\t\tTotal size of run: {run_size}GB\n"
                 f"\t\t\tDisk usage after upload: {usage}"
