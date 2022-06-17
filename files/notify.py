@@ -15,7 +15,7 @@ from urllib3.util import Retry
 from bs4 import BeautifulSoup as bs
 
 
-class slack():
+class Slack():
     """
     Slack related functions
     """
@@ -88,7 +88,7 @@ class slack():
             )
 
 
-class checkCycles():
+class CheckCycles():
     """
     dx-streaming-upload can appear to have uploaded everything fine, but
     issues with the sequencer can cause cycles to not complete and an
@@ -120,7 +120,7 @@ class checkCycles():
                 f"Cycles found:\n\n"
                 f"\t\t\t\t\tLane\t\tCycles\n\n\t{message}"
             )
-            slack().send(message=message, run=self.run_dir, alert=True)
+            Slack().send(message=message, run=self.run_dir, alert=True)
 
             return False
         else:
