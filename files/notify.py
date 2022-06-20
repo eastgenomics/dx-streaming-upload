@@ -100,9 +100,15 @@ class CheckCycles():
         self.cycle_dir = "Data/Intensities/BaseCalls/"
 
 
-    def check(self) -> None:
+    def check(self) -> str:
         """
         Call funcions to check logs
+
+        Returns
+        -------
+        message : str | None
+            Slack message to send on incomplete cycles, if complete with no
+            errors returns None
         """
         cycle_count = self.read_runinfo_xml()
         lanes, max_cycles = self.find_cycle_dirs()
@@ -120,11 +126,9 @@ class CheckCycles():
                 f"Cycles found:\n\n"
                 f"\t\t\t\t\tLane\t\tCycles\n\n\t{message}"
             )
-            Slack().send(message=message, run=self.run_dir, alert=True)
-
-            return False
+            return message
         else:
-            return True
+            return None
 
 
     def read_runinfo_xml(self):
