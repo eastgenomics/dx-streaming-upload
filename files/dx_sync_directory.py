@@ -333,7 +333,7 @@ def check_log(log, args):
         # Check that log has correct keys
         if all (k in log for k in ("tar_files","next_tar_index", "files", "file_prefix")):
             print('\n--- All required keys present in log', file=sys.stderr)
-    
+
     except KeyError as e:
         sys.exit('ERROR: Invalid log file. Log does not have "%s" key' % (e))
 
@@ -394,6 +394,7 @@ def split_into_tar_files(files_to_upload, log, args):
         print('QUITTING: Size of files to upload is not big ' +
                 'enough to to be uploaded yet. Please run again later or ' +
                 'specify --min-tar-size to be smaller', file=sys.stderr)
+        print(f'Files found to upload: {files_to_upload}', file=sys.stderr)
         return []
 
     return tars_to_upload

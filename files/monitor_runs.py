@@ -38,7 +38,7 @@ CONFIG_DEFAULT = {
     "n_seq_intervals": 2,
     "n_upload_threads": 8,
     "downstream_input": '',
-    "n_streaming_threads":1,
+    "n_streaming_threads": 1,
     "delay_sample_sheet_upload": False,
     "novaseq": False
 }
@@ -56,15 +56,18 @@ RUN_UPLOAD_DEST = "/"
 # run directory tarballs and upload sentinel file are stored
 REMOTE_RUN_FOLDER = "runs"
 
+
 def parse_args():
     """ Parse command line arguments """
-    parser = argparse.ArgumentParser(description='Script to monitor a local directory for new Illumina sequencing RUNS and\n' +
-                                                  'trigger the incremental upload script when a new RUN directory not net synced\n' +
-                                                  'to the DNANexus platform is observed.\n' +
-                                                  'It also re-triggers incremental upload if local log file has not been updated\n' +
-                                                  'for extended period of time.\n' +
-                                                  'This script is intended to be triggered regularly (e.g. as a CRON job)',
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description='Script to monitor a local directory for new Illumina sequencing RUNS and\n' +
+        'trigger the incremental upload script when a new RUN directory not net synced\n' +
+        'to the DNANexus platform is observed.\n' +
+        'It also re-triggers incremental upload if local log file has not been updated\n' +
+        'for extended period of time.\n' +
+        'This script is intended to be triggered regularly (e.g. as a CRON job)',
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     requiredNamed = parser.add_argument_group("Required named arguments")
 
@@ -84,6 +87,15 @@ def parse_args():
     requiredNamed.add_argument('--verbose', '-v',
                         help='Print verbose debugging messages',
                         action='store_true')
+
+    requiredNamed.add_argument(
+        "--sequencer_id", default=None,
+        help=(
+            "ID of sequencer defined in config, used to keep log and lock "
+            "file unique, and for adding to Slack notifications to know "
+            "which sequencer has an issue if multiple are set up"
+        )
+    )
 
     optionalNamed = parser.add_argument_group("Optional named arguemnts")
 
@@ -117,6 +129,7 @@ def parse_args():
         DEBUG = True
     return args
 
+
 def get_dx_auth_token():
     """Parses dx_auth_token from the output of dx env
     Exits with error message if dx env failed to execute
@@ -129,10 +142,17 @@ def get_dx_auth_token():
         sys.exit("Could not parse auth_token in dxpy environment, ensure that you have logged in using an API token!\n{0}: {1}".format(e.errno, e.strerror))
 
 
-def get_streaming_config(config_file, project, applet, workflow, script, token):
+def get_streaming_config(
+    config_file, project, applet, workflow, script, sequencer_id, token
+):
     """ Configure settings by reading in the config_file, which
     is assumed to be a YAML file"""
-    config = {"project": project, "token": token}
+    config = {
+        "project": project,
+        "sequencer_id": sequencer_id,
+        "token": token
+    }
+
     if applet:
         config["applet"] = applet
     if workflow:
@@ -147,6 +167,7 @@ def get_streaming_config(config_file, project, applet, workflow, script, token):
         config[key] = user_config_dict.get(key, default)
     return config
 
+
 def _transform_to_number(string):
     if type(string) != str:
         return string
@@ -159,10 +180,12 @@ def _transform_to_number(string):
             res = string
     return res
 
+
 def _translate_integers(config):
     for key in config:
         config[key] = _transform_to_number(config[key])
     return config
+
 
 def check_config_fields(config):
     """ Validate the given directory fields in config are valid directories"""
@@ -191,6 +214,7 @@ def check_config_fields(config):
             invalid_config("JSON parse error for downstream input: {0}".format(input_json))
     return config
 
+
 def get_run_folders(base_dir):
     """ Get the local directories within the specified base_dir.
     It does NOT check whether these directories are Illumina directories. This check
@@ -203,6 +227,7 @@ def get_run_folders(base_dir):
     return [dir_name for dir_name in os.listdir(base_dir)
             if os.path.isdir(os.path.join(base_dir, dir_name))
             and not dir_name.startswith(".")]
+
 
 def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=False):
     """ Check local folders to ascertain which are Illumina RUN directories (defined
@@ -278,6 +303,7 @@ def check_dnax_folders(run_folders, project):
     except KeyError as e:
         sys.exit("Unknown exception when fetching folders in {0} of {1}. {2}: {3}.".format(
                   RUN_UPLOAD_DEST, project, e.errno, e.strerror))
+
 
 def find_record(run_name, project):
     """ Wrapper to find the sentinel record for a given run_name in the given
@@ -371,6 +397,7 @@ def _trigger_streaming_upload(folder, config):
                "-D", config['run_length'],
                "-I", config['n_seq_intervals'],
                "-u", config['n_upload_threads'],
+               "--sequencer_id", f"\'{config['sequencer_id']}\'",
                "--verbose"]
 
     if config['novaseq']:
@@ -437,7 +464,8 @@ def main():
 
     streaming_config = get_streaming_config(args.config, args.project,
                                             args.applet, args.workflow,
-                                            args.script, token)
+                                            args.script, args.sequencer_id,
+                                            token)
 
     if DEBUG: print("==DEBUG== Got config: ", streaming_config)
 
