@@ -18,7 +18,8 @@ main() {
 
     if [[ -z $2 ]]; then
         printf "\ndx project and/or token not provided\n"
-        printf "\nscript must be run as bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}\n"
+        printf "\nscript must be run as bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh "
+        printf "{dnanexus-project-id} {dnanexus-auth-token}\n"
         printf "\n\nExiting now\n"
         exit 1
     fi
@@ -54,9 +55,12 @@ main() {
 
 
     # create RunInfo.xml files with IDs added
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295_1}\">/g" > /home/dx-upload/test_runs/A01295/${A01295_1}/RunInfo.xml
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303_1}\">/g" > /home/dx-upload/test_runs/A01303/${A01303_1}/RunInfo.xml
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01625_1}\">/g" > /home/dx-upload/test_runs/A01625/${A01625_1}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295_1}\">/g" \
+        > /home/dx-upload/test_runs/A01295/${A01295_1}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01303_1}\">/g" \
+        > /home/dx-upload/test_runs/A01303/${A01303_1}/RunInfo.xml
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01625_1}\">/g" \
+        > /home/dx-upload/test_runs/A01625/${A01625_1}/RunInfo.xml
 
     # trigger Ansible
     printf "\n\nStarting dx-streaming-upload\n\n"
@@ -68,9 +72,9 @@ main() {
 
     # create some files with enough size (2GB each) to trigger an upload
     printf "\nCreating test files...\n\n"
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=500 count=1000000
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L001/C123.1/output.dat  bs=500 count=1000000
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01625/${A01625_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat  bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L001/C123.1/output.dat bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01625/${A01625_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
 
     # create CopyComplete.txt so the runs are flagged as complete and will upload and close
     touch /home/dx-upload/test_runs/A01295/${A01295_1}/CopyComplete.txt \
