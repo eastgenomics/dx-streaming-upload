@@ -10,6 +10,7 @@
           - /home/dx-upload/test_runs/A01295/
         min_size: 250
         max_size: 1000
+        min_interval: 60
         novaseq: True
       - username: root
         sequencer_id: A01303
@@ -20,6 +21,7 @@
           - /home/dx-upload/test_runs/A01303/
         min_size: 250
         max_size: 1000
+        min_interval: 60
         novaseq: True
       - username: root
         sequencer_id: A01625
@@ -30,6 +32,7 @@
           - /home/dx-upload/test_runs/A01625/
         min_size: 250
         max_size: 1000
+        min_interval: 60
         novaseq: True
     mode: debug
     upload_project: $DX_PROJECT
