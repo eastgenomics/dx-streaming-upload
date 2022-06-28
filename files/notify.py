@@ -179,9 +179,10 @@ class CheckCycles():
             re.match(r'C\d+\.\d', y).group(0) for y in x
             if re.match(r'C\d+\.\d', y)] for x in cycle_dirs]
 
-        max_cycles = [sorted(x)[-1] for x in cycle_dirs]  # get highest cycle
+        # get highest cycle dir for each lane
         max_cycles = [
-            int(x.replace('C', '').split('.')[0]) for x in max_cycles
+            [int(y.replace('C', '').split('.')[0]) for y in x] for x in cycle_dirs
         ]
+        max_cycles = [sorted(x)[-1] for x in max_cycles]
 
         return lanes, max_cycles
