@@ -176,12 +176,12 @@ class CheckCycles():
         # filter down to just cycle directories, dir can be a mix of cycle
         # dirs (i.e. C123.1) and others (i.e. s_1_2113.filter)
         cycle_dirs = [[
-            re.match('C[0-9]{1,2}.[0-9]', y).group(0) for y in x
-            if re.match('C[0-9]{1,2}.[0-9]', y)] for x in cycle_dirs]
+            re.match('C\d+\.\d', y).group(0) for y in x
+            if re.match('C\d+\.\d', y)] for x in cycle_dirs]
 
         max_cycles = [sorted(x)[-1] for x in cycle_dirs]  # get highest cycle
         max_cycles = [
-            int(x.replace('C', '').replace('.1', '')) for x in max_cycles
+            int(x.replace('C', '').split('.')[0]) for x in max_cycles
         ]
 
         return lanes, max_cycles
