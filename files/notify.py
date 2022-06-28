@@ -7,6 +7,7 @@ Jethro Rainford
 220316
 """
 import os
+import re
 import sys
 import requests
 from requests.adapters import HTTPAdapter
@@ -168,8 +169,15 @@ class CheckCycles():
         cycle_path = os.path.join(self.run_dir, self.cycle_dir)
         lanes = sorted(os.listdir(cycle_path))  # get all lane directories
 
-        # get all cycles in each lane
+        # get all cycles in each lane as a list of lists, i.e.
+        # [[C1.1, C2.1, C3.1...], [C1.1, C2.1, C3.1...]]
         cycle_dirs = [os.listdir(os.path.join(cycle_path, x)) for x in lanes]
+
+        # filter down to just cycle directories, dir can be a mix of cycle
+        # dirs (i.e. C123.1) and others (i.e. s_1_2113.filter)
+        cycle_dirs = [[
+            re.match('C[0-9]{1,2}.[0-9]', y).group(0) for y in x
+            if re.match('C[0-9]{1,2}.[0-9]', y)] for x in cycle_dirs]
 
         max_cycles = [sorted(x)[-1] for x in cycle_dirs]  # get highest cycle
         max_cycles = [
