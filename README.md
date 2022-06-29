@@ -248,8 +248,11 @@ docker run -itd \
   -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \
   dx-streaming-upload:v1.0.0
 
+# once running in the background, you can open a shell in the container
+docker exec -it {container-id} bash
+
 # cron doesn't have access to env variables, therefore add them to /etc/environment where it can read
-docker exec -it {container-id} bash -c "printenv | grep SLACK >> /etc/environment"
+printenv | grep SLACK >> /etc/environment
 
 # add proxy to /etc/environment for cron to access if required and set as env variables
 echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment
@@ -258,10 +261,7 @@ echo "http_proxy=${http_proxy}" >> /etc/environment
 echo "https_proxy=${http_proxy}" >> /etc/environment
 
 # start up Ansible in the detached container
-docker exec -it {container-id} ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_token=<SECRET_TOKEN>"
-
-# drop in to the running container if needed (i.e. to investigate issues)
-sudo docker exec -it {container-id} bash
+ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_token=<SECRET_TOKEN>"
 
 ```
 

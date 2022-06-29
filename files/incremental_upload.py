@@ -667,8 +667,13 @@ def main():
     if incomplete_cycles:
         # completed run with missing cycles, upload alert file, send Slack
         # alert and stop any downstream analysis
-        alert_file = f'alert.{Path(args.run_dir).name}.incomplete_cycles'
+        alert_file = f'alert.{run_id}.incomplete_cycles'
         alert_file = os.path.join(args.run_dir, alert_file)
+
+        incomplete_cycles += (
+            f"\n\nRun summary: uploaded {run_size}GB in {total_time}"
+        )
+
         with open(alert_file, 'w') as fh:
             # write our alert log file and upload
             fh.write(
@@ -691,7 +696,7 @@ def main():
             f'Stopping and not running any downstream analysis.'
         )
 
-        raise_error(msg=incomplete_cycles, send=True, run=args.run_dir)
+        raise_error(msg=incomplete_cycles, send=True, run=run_id)
 
 
     if halt_downstream:
