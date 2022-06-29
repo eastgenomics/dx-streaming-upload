@@ -183,6 +183,6 @@ class CheckCycles():
         max_cycles = [
             [int(y.replace('C', '').split('.')[0]) for y in x] for x in cycle_dirs
         ]
-        max_cycles = [sorted(x)[-1] for x in max_cycles]
+        max_cycles = [max(x) for x in max_cycles]
 
         return lanes, max_cycles
