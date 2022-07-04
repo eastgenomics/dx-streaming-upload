@@ -230,8 +230,8 @@ def get_run_folders(base_dir):
 
 
 def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=False):
-    """ Check local folders to ascertain which are Illumina RUN directories (defined
-    as containing a RunInfo.xml file in root of the folder).
+    """ Check local folders to ascertain which are Illumina RUN directories
+    (defined as containing a RunInfo.xml file in root of the folder).
 
     Classify such RUN folders into 3 classes:
      - Completed runs (has a RunInfo.xml and a RTAComplete.txt/xml file)
