@@ -230,17 +230,31 @@ def get_run_folders(base_dir):
 
 
 def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=False):
-    """ Check local folders to ascertain which are Illumina RUN directories (defined
-    as containing a RunInfo.xml file in root of the folder).
+    """ Check local folders to ascertain which are Illumina RUN directories
+    (defined as containing a RunInfo.xml file in root of the folder).
+
     Classify such RUN folders into 3 classes:
      - Completed runs (has a RunInfo.xml and a RTAComplete.txt/xml file)
      - In-progress run (has a RunInfo.xml file, but not a RTAComplete.txt/xml file)
      - Stale run (has a RunInfo.xml file, which was created more than Y times expected duration
        of a sequencing run, both the sequencing runtime and Y will be user-specified,
        with defaults of 2 and 24hrs respectively).
+
+    These are categorised into 5 returns:
+        - not_run_folders : list
+            folders that don't appear to be a run
+        - completed_old_runs : list
+            completed, stale runs - not to upload
+        - stale_runs : list
+            in-progress, stale run - not to upload
+        - completed_syncable_runs : list
+            completed, non-stale runs - can be uploaded
+        - in_progress_runs : list
+            in-progress, non-stale run - can be uploaded
     """
 
-    not_run_folders, completed_runs, in_progress_runs, stale_runs = ([] for i in range(4))
+    (not_run_folders, completed_syncable_runs, completed_old_runs,
+        in_progress_runs, stale_runs) = ([] for i in range(5))
 
     for run_folder in run_folders:
         folder_path = os.path.join(base_dir, run_folder)
@@ -249,27 +263,34 @@ def check_local_runs(base_dir, run_folders, run_length, n_intervals, novaseq=Fal
             # Not a run_folder
                 not_run_folders.append(run_folder)
         else:
-            # Is a RUN folder
-            if termination_file_exists(folder_path, novaseq):
-                # Is a completed RUN folder
-                completed_runs.append(run_folder)
-            else:
-                # RUN is incomplete, check whether it's stale
-                curr_time = time.time()
-                created_time = os.path.getmtime(run_info_path)
-                time_to_wait = dxpy.utils.normalize_timedelta(run_length) / 1000 * n_intervals
-                if (curr_time - created_time) > time_to_wait:
-                    # Stale run
-                    if DEBUG: print("==DEBUG== run folder {0} was created on {1}; "\
-                    "it is determined to be STALE and will NOT be uploaded.".format(run_folder,
-                        time.strftime("%Z - %Y/%m/%d, %H:%M:%S", time.localtime(created_time))))
+            # Is a RUN folder, check if it is in time to upload or stale
+            curr_time = time.time()
+            created_time = os.path.getmtime(run_info_path)
+            time_to_wait = dxpy.utils.normalize_timedelta(run_length) / 1000 * n_intervals
+            if (curr_time - created_time) > time_to_wait:
+                # Stale run
+                if termination_file_exists(folder_path, novaseq):
+                    # stale run with termination, likely fully uploaded and old
+                    completed_old_runs.append(run_folder)
+                else:
+                    # stale ongoing run => won't be uploded
+                    if DEBUG: print(
+                        f"==DEBUG== run folder {run_folder} was created on "
+                        f"{time.strftime('%Z - %Y/%m/%d, %H:%M:%S', time.localtime(created_time))}; "
+                        "it is determined to be STALE and will NOT be uploaded."
+                        )
 
                     stale_runs.append(run_folder)
+            else:
+                # non-stale run
+                if termination_file_exists(folder_path, novaseq):
+                    # Is a completed RUN folder and still in time to upload
+                    completed_syncable_runs.append(run_folder)
                 else:
                     # Ongoing run
                     in_progress_runs.append(run_folder)
 
-    return (not_run_folders, completed_runs, in_progress_runs, stale_runs)
+    return (not_run_folders, completed_syncable_runs, completed_old_runs, in_progress_runs, stale_runs)
 
 
 def check_dnax_folders(run_folders, project):
@@ -477,24 +498,47 @@ def main():
 
     if DEBUG: print("==DEBUG== Validated config: ", streaming_config)
 
-    (not_runs, completed_runs, ongoing_runs, stale_runs) = check_local_runs(args.directory, run_folders,
-                                                                  streaming_config['run_length'],
-                                                                  streaming_config['n_seq_intervals'], streaming_config.get("novaseq", False))
+    (not_runs, completed_syncable_runs, completed_old_runs,
+    ongoing_runs, stale_runs) = check_local_runs(
+        args.directory,
+        run_folders,
+        streaming_config['run_length'],
+        streaming_config['n_seq_intervals'],
+        streaming_config.get("novaseq", False)
+    )
 
     if DEBUG:
         print("==DEBUG== Searching for run directories in {0}:".format(args.directory))
         if not_runs:
-            print("==DEBUG== Following folders are deemed NOT to be run directories: {0}".format(not_runs))
-        if completed_runs:
-            print("==DEBUG== Following folders are deemed to be COMPLETED runs: {0}".format(completed_runs))
+            print(
+                "==DEBUG== Following folders are deemed NOT to be run "
+                f"directories: {not_runs}"
+            )
+        if completed_syncable_runs:
+            print(
+                "==DEBUG== Following folders are deemed to be COMPLETED runs "
+                f"and IN-PROGRESS: {completed_syncable_runs}"
+            )
         if ongoing_runs:
-            print("==DEBUG== Following folders are deemed to be ONGOING runs: {0}".format(ongoing_runs))
+            print(
+                "==DEBUG== Following folders are deemed to be ONGOING runs: "
+                f"{ongoing_runs}"
+            )
+        if completed_old_runs:
+            print(
+                "==DEBUG== Following folders are completed and old / stale => "
+                f"will not upload: {completed_old_runs}"
+            )
         if stale_runs:
-            print("==DEBUG== Following folders are deeemed to be STALE runs "\
-            "and will not be uploaded: {0}".format(stale_runs))
+            print(
+                "==DEBUG== Following folders are deeemed to be STALE runs "
+                f"and will not be uploaded: {stale_runs}"
+            )
 
-    syncable_folders = completed_runs + ongoing_runs
+    # get lists of runs that are not stale and can check to be uploaded
+    syncable_folders = completed_syncable_runs + ongoing_runs
     (synced_folders, unsynced_folders) = check_dnax_folders(syncable_folders, args.project)
+
     if DEBUG: print("==DEBUG== Got synced folders: ", synced_folders)
     if DEBUG: print("==DEBUG== Got unsynced folders: ", unsynced_folders)
 
@@ -508,7 +552,33 @@ def main():
     folders_to_sync += unsynced_folders
     folders_to_sync = ["{0}/{1}".format(args.directory, folder) for folder in folders_to_sync]
 
-    if DEBUG: "==DEBUG== Folders to sync: {0}".format(folders_to_sync)
+    if DEBUG: print("==DEBUG== Folders to sync: {0}".format(folders_to_sync))
+
+    # write a log file to users home directory to track the current
+    # state of runs picked up in monitored directory
+    state_log = os.path.join(
+        os.path.expanduser('~'), f'{args.sequencer_id}_all_runs_state.log'
+    )
+    with open(state_log, 'w') as fh:
+        fh.write(
+            f"Current state of detected runs for {args.sequencer_id} "
+            f"monitoring {args.directory}\n"
+        )
+        fh.write(f"\n\nNot run directories:")
+        [fh.write(f"\n\t{x}") for x in not_runs]
+
+        fh.write(f"\n\nCompleted runs still uploading:")
+        [fh.write(f"\n\t{x}") for x in completed_syncable_runs]
+
+        fh.write("\n\nOngoing runs still uploading:")
+        [fh.write(f"\n\t{x}") for x in ongoing_runs]
+
+        fh.write("\n\nOld runs that appear to be complete => will NOT be uploaded:")
+        [fh.write(f"\n\t{x}") for x in completed_old_runs]
+
+        fh.write("\n\nOngoing stale runs => will NOT be uploaded:")
+        [fh.write(f"\n\t{x}") for x in stale_runs]
+        fh.write(f"\n")
 
     trigger_streaming_upload(folders_to_sync, streaming_config)
 
