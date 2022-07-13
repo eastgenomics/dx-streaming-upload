@@ -412,7 +412,9 @@ def main():
     notify_log = notify_log.replace('"', '').replace("'", "")
 
     with open(notify_log, 'a+') as fh:
+        fh.seek(0)
         log = ' '.join(fh.readlines())
+        print(f"Runs already notified from {notify_log}:\n {log}")
 
     if not args.run_dir in log:
         # first time trying upload
