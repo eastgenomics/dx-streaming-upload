@@ -561,19 +561,22 @@ def main():
     )
     with open(state_log, 'w') as fh:
         fh.write(
-            f"Current state of detected runs for {args.sequencer_id} "
+            f"\nCurrent state of detected runs for {args.sequencer_id} "
             f"monitoring {args.directory}\n"
         )
         fh.write(f"\n\nNot run directories:")
         [fh.write(f"\n\t{x}") for x in not_runs]
 
-        fh.write(f"\n\nCompleted runs still uploading:")
+        fh.write(f"\n\nCompleted runs still uploading or uploaded:")
         [fh.write(f"\n\t{x}") for x in completed_syncable_runs]
 
         fh.write("\n\nOngoing runs still uploading:")
         [fh.write(f"\n\t{x}") for x in ongoing_runs]
 
-        fh.write("\n\nOld runs that appear to be complete => will NOT be uploaded:")
+        fh.write(
+            "\n\nOld runs that appear to be complete => will NOT be "
+            "monitored for uploading:"
+        )
         [fh.write(f"\n\t{x}") for x in completed_old_runs]
 
         fh.write("\n\nOngoing stale runs => will NOT be uploaded:")
