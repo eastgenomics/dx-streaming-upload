@@ -198,8 +198,8 @@ def parse_samplesheet(run_dir):
     run_dir : str
         directory of run
 
-    Returns : str
-        path to samplesheet
+    Returns : str | None
+        path to samplesheet | None if no samplesheet or > 1 samplesheets found
     """
     files = os.listdir(run_dir)
     files = [
