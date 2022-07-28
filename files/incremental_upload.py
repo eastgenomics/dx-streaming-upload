@@ -14,7 +14,7 @@ from math import ceil
 from pathlib import Path
 from shutil import disk_usage
 
-from notify import Slack, CheckCycles
+from notify import Slack, CheckCycles, parse_samplesheet
 
 # Uploads an Illumina run directory (HiSeq 2500, HiSeq X, NextSeq)
 # If for use with a MiSeq, users MUST change the config files to include and NOT specify the -l argument
@@ -397,6 +397,16 @@ def main():
     check_input(args)
     run_id = get_run_id(args.run_dir, args.sequencer_id)
 
+    # Set all naming conventions
+    REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
+    REMOTE_READS_FOLDER = "/" + run_id + "/reads"
+    REMOTE_ANALYSIS_FOLDER = "/" + run_id + "/analyses"
+
+    FILE_PREFIX = "run." + run_id + ".lane."
+
+    # Prep log & record names
+    lane_info = []
+
     # calculating disk space to add to slack success message
     usage = disk_usage(args.run_dir)  # tuple of (total, used, free) returned
     usage = (
@@ -411,6 +421,16 @@ def main():
     notify_log = f"{args.sequencer_id}.start_notify.log"
     notify_log = notify_log.replace('"', '').replace("'", "")
 
+    # get experiment name from samplesheet for notification
+    experiment = parse_samplesheet(args.run_dir)
+
+    # build upload location url for Slack notification
+    url = (
+        "https://platform.dnanexus.com/panx/projects/"
+        f"{args.project.replace('project-', '')}/data/"
+        f"{Path(args.run_dir).name}"
+    )
+
     with open(notify_log, 'a+') as fh:
         fh.seek(0)
         log = ' '.join(fh.readlines())
@@ -423,27 +443,23 @@ def main():
             fh.write(f"{args.run_dir}\n")
 
         try:
-            Slack().send(
-                message=(
-                    f":upload-cloud: dx-streaming-upload: starting upload of "
-                    f"run *{run_id}*\n\t\t{usage}"
-                ), run=run_id, log=True
+            # build message and send notification
+            message = (
+                f":upload-cloud: dx-streaming-upload: "
+                f"starting upload of run *{run_id}*\n"
             )
+            if experiment:
+                message += f"\nExperiment name: {experiment}\n"
+
+            message += f"\nUpload location: {url}\n\n\{usage}"
+
+            Slack().send(message, run=run_id, log=True)
         except Exception as e:
             print_stderr(f"Error sending slack message: {e}")
 
+
     # timing upload for final upload message
     start = time.perf_counter()
-
-    # Set all naming conventions
-    REMOTE_RUN_FOLDER = "/" + run_id + "/runs"
-    REMOTE_READS_FOLDER = "/" + run_id + "/reads"
-    REMOTE_ANALYSIS_FOLDER = "/" + run_id + "/analyses"
-
-    FILE_PREFIX = "run." + run_id + ".lane."
-
-    # Prep log & record names
-    lane_info = []
 
     # If no lanes are specified, set lane to all, otherwise, set to array of lanes
     if not args.num_lanes:
@@ -722,6 +738,7 @@ def main():
         message=(
             f":white_check_mark: dx-streaming-upload: "
             f"run successfully uploaded *{run_id}*\n"
+            f"\t\t\tUpload location: {url}"
             f"\t\t\tTotal upload time: {total_time}\n"
             f"\t\t\tTotal size of run: {run_size}GB\n"
             f"\t\t\tDisk usage after upload: {usage}"
