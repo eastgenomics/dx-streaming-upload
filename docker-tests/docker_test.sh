@@ -48,10 +48,14 @@ main() {
 
 
     # create malformed and duplicate samplesheet names to test regex matching and uploading
-    touch /home/dx-upload/test_runs/A01295/${A01295_1}/samplesheet_for_run_A01295_${A01295_1}.csv \
-          /home/dx-upload/test_runs/A01303/${A01303_1}/SampleSheet.csv \
-          /home/dx-upload/test_runs/A01625/${A01625_1}/SampleSheet.csv \
-          /home/dx-upload/test_runs/A01625/${A01625_1}/SampleSheetDuplicate.csv
+    # add experiment name to A01295 and A01303 that will upload to test parsing out for
+    # sending in Slack notification
+    echo "Experiment Name: experiment_name_from_samplesheet_A01295" > \
+        /home/dx-upload/test_runs/A01295/${A01295_1}/samplesheet_for_run_A01295_${A01295_1}.csv
+    echo "Experiment Name: experiment_name_from_samplesheet_A01303" > \
+        /home/dx-upload/test_runs/A01303/${A01303_1}/SampleSheet.csv
+    touch /home/dx-upload/test_runs/A01625/${A01625_1}/SampleSheet.csv \
+        /home/dx-upload/test_runs/A01625/${A01625_1}/SampleSheetDuplicate.csv
 
 
     # create RunInfo.xml files with IDs added
