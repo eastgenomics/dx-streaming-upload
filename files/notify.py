@@ -216,6 +216,7 @@ def parse_samplesheet(run_dir):
         # more than one samplesheet found, return None and this is handled
         # in incremental_upload
         print(f"More than one samplesheet found: {files}")
+        return None
 
     try:
         print(f'Found samplesheet: {files[0]}')
