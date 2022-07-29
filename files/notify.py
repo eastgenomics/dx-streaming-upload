@@ -230,5 +230,3 @@ def parse_samplesheet(run_dir):
         return None
 
     return experiment_name
-
-
