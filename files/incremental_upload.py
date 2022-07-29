@@ -449,9 +449,9 @@ def main():
                 f"starting upload of run *{run_id}*\n"
             )
             if experiment:
-                message += f"\nExperiment name: {experiment}\n"
+                message += f"\nExperiment name: *{experiment}*\n"
 
-            message += f"\nUpload location: {url}\n\n\{usage}"
+            message += f"\nUpload location: {url}\n\n{usage}"
 
             Slack().send(message, run=run_id, log=True)
         except Exception as e:
