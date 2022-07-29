@@ -186,3 +186,48 @@ class CheckCycles():
         max_cycles = [max(x) for x in max_cycles]
 
         return lanes, max_cycles
+
+
+def parse_samplesheet(run_dir):
+    """
+    Use regex to find samplesheets in given run directory and parse out
+    experiment name
+
+    Parameters
+    ----------
+    run_dir : str
+        directory of run
+
+    Returns : str | None
+        path to samplesheet | None if no samplesheet or > 1 samplesheets found
+    """
+    files = os.listdir(run_dir)
+    files = [
+        re.search('.*sample[-_ ]?sheet.*.csv$', x, re.IGNORECASE) for x in files
+    ]
+    files = [x.group(0) for x in files if x]
+
+    if len(files) == 0:
+        # no samplesheet found
+        print("No samplesheet found")
+        return None
+
+    if len(files) > 1:
+        # more than one samplesheet found, return None and this is handled
+        # in incremental_upload
+        print(f"More than one samplesheet found: {files}")
+        return None
+
+    try:
+        print(f'Found samplesheet: {files[0]}')
+        with open(os.path.join(run_dir, files[0])) as fh:
+            content = fh.read().splitlines()
+            experiment_name = [x for x in content if x.startswith('Experiment')]
+            experiment_name = experiment_name[0].replace(
+                'Experiment Name:', '').replace(',', '').replace('\n', '')
+    except Exception as error:
+        # catch anything that might raise an error to not stop uploading
+        print('Error parsing experiment name from samplesheet')
+        return None
+
+    return experiment_name
