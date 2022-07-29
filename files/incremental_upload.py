@@ -738,7 +738,7 @@ def main():
         message=(
             f":white_check_mark: dx-streaming-upload: "
             f"run successfully uploaded *{run_id}*\n"
-            f"\t\t\tUpload location: {url}"
+            f"\t\t\tUpload location: {url}\n"
             f"\t\t\tTotal upload time: {total_time}\n"
             f"\t\t\tTotal size of run: {run_size}GB\n"
             f"\t\t\tDisk usage after upload: {usage}"
