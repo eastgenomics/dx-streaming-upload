@@ -739,7 +739,7 @@ def main():
         f"run successfully uploaded *{run_id}*\n"
     )
     if experiment:
-        message += f"\nExperiment name: *{experiment}*\n"
+        message += f"\t\t\tExperiment name: *{experiment}*\n"
     message += (
         f"\t\t\tUpload location: {url}\n"
         f"\t\t\tTotal upload time: {total_time}\n"
