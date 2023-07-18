@@ -57,7 +57,7 @@ main() {
 
     # trigger Ansible
     printf "\n\nStarting dx-streaming-upload\n\n"
-    ansible-playbook /home/dx-upload/dx-streaming-upload/docker-tests/test-playbook.yml -v --extra-vars "dx_token=$2"
+    ansible-playbook /home/dx-upload/test-playbook.yml -v --extra-vars "dx_token=$2"
 
     # start cron
     printf "\nStarting cron:\n\n"
