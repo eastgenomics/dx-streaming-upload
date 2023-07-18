@@ -780,10 +780,6 @@ def main():
             # applet verified in check_input, assume no change
             applet = dxpy.get_handler(args.applet)
 
-            # Prepare output folder, if downstream analysis specified
-            reads_target_folder = get_target_folder(REMOTE_READS_FOLDER, lane)
-            print_stderr("Creating output folder %s" %(reads_target_folder))
-
             # Decide on job name (<executable>-<run_id>)
             job_name = applet.title + "-" + run_id
 
@@ -791,10 +787,11 @@ def main():
             downstream_input["upload_sentinel_record"] = dxpy.dxlink(record)
 
             # Run specified applet
-            job = applet.run(downstream_input,
-                        folder=reads_target_folder,
-                        project=args.project,
-                        name=job_name)
+            job = applet.run(
+                downstream_input,
+                project=args.project,
+                name=job_name
+            )
 
             print_stderr("Initiated job %s from applet %s for lane %s" %(job, args.applet, lane))
     # Close if args.applet
@@ -816,14 +813,6 @@ def main():
             # Prepare output folder, if downstream analysis specified
             analyses_target_folder = get_target_folder(REMOTE_ANALYSIS_FOLDER, lane)
             print_stderr("Creating output folder %s" %(analyses_target_folder))
-
-            try:
-                project.new_folder(analyses_target_folder, parents=True)
-            except dxpy.DXError as e:
-                raise_error(
-                    "Failed to create new folder %s. %s" %(analyses_target_folder, e),
-                    send=True, run=run_id
-                )
 
             # Decide on job name (<executable>-<run_id>)
             job_name = workflow.title + "-" + run_id
