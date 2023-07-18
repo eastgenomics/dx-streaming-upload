@@ -1,0 +1,21 @@
+- hosts: localhost
+  vars:
+    monitored_users:
+      - username: root
+        sequencer_id: A01295
+        local_tar_directory: /home/dx-upload/test_runs/A01295_tmp
+        local_log_directory: /var/log/dx-streaming-upload/A01295
+        exclude_patterns: Analysis
+        monitored_directories:
+          - /home/dx-upload/test_runs/A01295/
+        min_size: 250
+        max_size: 1000
+        min_interval: 60
+        novaseq: True
+        applet: app-GVbg0Bj41yV3kk30pyx1zvgZ
+        downstream_input: '{"EGGD_CONDUCTOR_CONFIG": {"$dnanexus_link": "file-GKxzp6j4y1jF03ZYBPb70k6J"}, "ASSAY_CONFIG": {"$dnanexus_link": "assay-id"}, "CREATE_PROJECT": false, "TESTING": true}'
+    mode: debug
+    upload_project: $DX_PROJECT
+
+  roles:
+    - dx-streaming-upload

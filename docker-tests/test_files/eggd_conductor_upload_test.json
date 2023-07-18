@@ -1,0 +1,30 @@
+{
+    "name": "Test config for eggd_conductor and dx-streaming-upload",
+    "assay": "test",
+    "assay_code": "1",
+    "version": "1.0.0",
+    "demultiplex": false,
+    "executables": {
+        "app-G8vFF0Q4v5vPVgx90QjQfg7v": {
+            "name": "TSO500 local app",
+            "details": "TSO500 local app",
+            "url": "https://github.com/eastgenomics/eggd_tso500",
+            "analysis": "analysis_1",
+            "per_sample": false,
+            "process_fastqs": false,
+            "extra_args": {"priority": "high"},
+            "inputs": {
+                "TSO500_ruo": {
+                    "$dnanexus_link": "file-Fz4X61Q44Bv44FyfJX1jJPj6"
+                },
+                "samplesheet": {
+                    "$dnanexus_link": "INPUT-SAMPLESHEET"
+                },
+                "input_files": "INPUT-UPLOAD_TARS"
+            },
+            "output_dirs": {
+                "app-G8vFF0Q4v5vPVgx90QjQfg7v": "/OUT-FOLDER/APP-NAME"
+            }
+        }
+    }
+}

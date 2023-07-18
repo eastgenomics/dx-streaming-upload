@@ -4,11 +4,10 @@ FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt install ansible cron rsyslog software-properties-common git nano python3 python3-dev python3-pip sudo -y
+RUN apt install ansible cron rsyslog software-properties-common git nano python3 \
+    python3-dev python3-pip sudo jq tree -y
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install --upgrade --ignore-installed pyyaml dxpy beautifulsoup4 lxml
-
-RUN cron
 
 # add a user to run uploads with, set permissions so both user and root
 # can run uploads as user
@@ -40,4 +39,4 @@ RUN mkdir /home/dx-upload/logs
 RUN chown -R dx-upload /home/dx-upload
 
 WORKDIR /home/dx-upload/
-ENTRYPOINT /bin/bash
+CMD service cron start && /bin/bash

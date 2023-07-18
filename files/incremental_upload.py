@@ -760,14 +760,7 @@ def main():
                 "Expected a dict for downstream input. Got %s." %input_dict,
                 send=True, run=run_id
             )
-
-        for k, v in list(input_dict.items()):
-            if not (isinstance(k, str) and (isinstance(v, str) or isinstance(v, dict))):
-                    raise_error(
-                        "Expected (string) key and (string or dict) value pairs for downstream input. Got (%s)%s (%s)%s" %(type(k), k, type(v), v),
-                        send=True, run=run_id
-                        )
-
+        for k, v in input_dict.items():
             downstream_input[k] = v
 
     if args.applet:
