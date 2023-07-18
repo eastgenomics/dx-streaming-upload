@@ -734,16 +734,20 @@ def main():
         )
 
     # send slack notification to log channel of successful upload
-    Slack().send(
-        message=(
-            f":white_check_mark: dx-streaming-upload: "
-            f"run successfully uploaded *{run_id}*\n"
-            f"\t\t\tUpload location: {url}\n"
-            f"\t\t\tTotal upload time: {total_time}\n"
-            f"\t\t\tTotal size of run: {run_size}GB\n"
-            f"\t\t\tDisk usage after upload: {usage}"
-        ), run=run_id, log=True
+    message=(
+        f":white_check_mark: dx-streaming-upload: "
+        f"run successfully uploaded *{run_id}*\n"
     )
+    if experiment:
+        message += f"\nExperiment name: *{experiment}*\n"
+    message += (
+        f"\t\t\tUpload location: {url}\n"
+        f"\t\t\tTotal upload time: {total_time}\n"
+        f"\t\t\tTotal size of run: {run_size}GB\n"
+        f"\t\t\tDisk usage after upload: {usage}"
+    )
+
+    Slack().send(message=message, run=run_id, log=True)
 
     downstream_input = {}
     if args.downstream_input:
@@ -779,14 +783,6 @@ def main():
             # Prepare output folder, if downstream analysis specified
             reads_target_folder = get_target_folder(REMOTE_READS_FOLDER, lane)
             print_stderr("Creating output folder %s" %(reads_target_folder))
-
-            try:
-                project.new_folder(reads_target_folder, parents=True)
-            except dxpy.DXError as e:
-                raise_error(
-                    "Failed to create new folder %s. %s" %(reads_target_folder, e),
-                    send=True, run=run_id
-                )
 
             # Decide on job name (<executable>-<run_id>)
             job_name = applet.title + "-" + run_id
