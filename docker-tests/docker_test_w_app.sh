@@ -47,9 +47,9 @@ main() {
     printf "\nCreating example directory structure...\n"
     mkdir -p /home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1
 
-    # create samplesheet
-    echo "Experiment Name:,experiment_name_from_samplesheet_A01295,,,,," > \
-        /home/dx-upload/test_runs/A01295/${A01295_1}/samplesheet_for_run_A01295_${A01295_1}.csv
+    # copy in test samplesheet
+    cp /home/dx-upload/dx-streaming-upload/docker-tests/test_files/test_samplesheet.csv \
+        /home/dx-upload/test_runs/A01295/${A01295_1}/SampleSheet.csv
 
     # create RunInfo.xml files with IDs added
     cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01295_1}\">/g" \
