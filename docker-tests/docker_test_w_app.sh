@@ -65,7 +65,7 @@ main() {
 
     # create some files with enough size (2GB each) to trigger an upload
     printf "\nCreating test files...\n\n"
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=100000
     
     # create CopyComplete.txt so the runs are flagged as complete and will upload and close
     touch /home/dx-upload/test_runs/A01295/${A01295_1}/CopyComplete.txt

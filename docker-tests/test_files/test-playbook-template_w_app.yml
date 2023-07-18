@@ -8,7 +8,7 @@
         exclude_patterns: Analysis
         monitored_directories:
           - /home/dx-upload/test_runs/A01295/
-        min_size: 250
+        min_size: 10
         max_size: 1000
         min_interval: 60
         novaseq: True
