@@ -780,8 +780,10 @@ def main():
             # applet verified in check_input, assume no change
             applet = dxpy.get_handler(args.applet)
 
-            # Decide on job name (<executable>-<run_id>)
+            # Decide on job name (<executable>-<run_id>-<experiment_name>)
             job_name = applet.title + "-" + run_id
+            if experiment:
+                job_name += f"-{experiment}"
 
             # Overwite upload_sentinel_record input of applet to the record of inc upload
             downstream_input["upload_sentinel_record"] = dxpy.dxlink(record)
