@@ -760,8 +760,8 @@ def main():
                 "Expected a dict for downstream input. Got %s." %input_dict,
                 send=True, run=run_id
             )
-
-        downstream_input[k] = v
+        for k, v in input_dict.items():
+            downstream_input[k] = v
 
     if args.applet:
         # project verified in check_input, assuming no change
