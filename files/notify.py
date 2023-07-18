@@ -223,7 +223,9 @@ def parse_samplesheet(run_dir):
         with open(os.path.join(run_dir, files[0])) as fh:
             content = fh.read().splitlines()
             experiment_name = [x for x in content if x.startswith('Experiment')]
-            experiment_name = experiment_name[0].split(',')[1]
+            # handle experiment name not being in 2nd column
+            experiment_name = re.sub(r',{1,}', ',', experiment_name[0])
+            experiment_name = experiment_name.split(',')[1]
     except Exception as error:
         # catch anything that might raise an error to not stop uploading
         print('Error parsing experiment name from samplesheet')
