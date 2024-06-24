@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+from hashlib import md5
 import sys
 import os
 import subprocess as sub
@@ -13,8 +13,9 @@ import json
 from math import ceil
 from pathlib import Path
 from shutil import disk_usage
+from typing import Union
 
-from notify import Slack, CheckCycles, parse_samplesheet
+from files.notify import Slack, CheckCycles, parse_samplesheet
 
 # Uploads an Illumina run directory (HiSeq 2500, HiSeq X, NextSeq)
 # If for use with a MiSeq, users MUST change the config files to include and NOT specify the -l argument
@@ -391,6 +392,110 @@ def termination_file_exists(run_dir, novaseq):
     else:
         return os.path.isfile(os.path.join(run_dir, "CopyComplete.txt"))
 
+
+def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
+    """
+    Find the samplesheet(s) in the local run data directory.
+
+    The following behaviour is performed:
+        - no samplesheet found -> returns the string of default samplesheet
+            name 'SampleSheet.csv' to continue downstream behaviour
+            correctly
+        - 1 samplesheet found -> return name of samplesheet
+        - 2 samplesheets found -> test if they have identical contents,
+            if so return the first, if not send error alert and return
+            bool flag to not run downstream analysis after uploading
+        - > 2 samplesheets found -> send error alert and return
+            bool flag to not run downstream analysis after uploading
+
+    Parameters
+    ----------
+    run_directory : str
+        path of run directory to search
+    run_id : str
+        ID of run
+
+    Returns
+    -------
+    str
+        name of samplesheet selected
+    bool
+        if to halt downstream analysis in case of multiple samplesheets
+    """
+    files = os.listdir(run_directory)
+    files = [
+        re.search('.*sample[-_ ]?sheet.*.csv$', x, re.IGNORECASE) for x in files
+    ]
+    files = [x.group(0) for x in files if x]
+    print_stderr(f"Found samplesheet(s): {files}")
+
+    # flag to stop downstream analysis if more than one samplesheet found
+    halt_downstream = False
+
+    # check for presence of samplesheet
+    if len(files) == 0:
+        print_stderr("No samplesheet found, continuing...")
+
+        # call the samplesheet default name even though missing, will try
+        # and upload with upload_single_file() which will print error and
+        # continue. Don't halt downstream analysis.
+        local_sample_sheet = 'SampleSheet.csv'
+        halt_downstream = False
+
+    elif len(files) == 1:
+        local_sample_sheet = 'SampleSheet.csv'
+        halt_downstream = False
+
+    elif len(files) == 2 and check_identical_samplesheets(files[0], files[1]):
+        # found 2 samplesheets, test if they are identical and we can
+        # just select one to upload and associate to the sentinel record
+        local_sample_sheet = 'SampleSheet.csv'
+        halt_downstream = False
+
+    else:
+        # more than one found and not the same file, continue the
+        # upload but stop any downstream analysis since we don't
+        # know which is correct
+        sheets = ' '.join([f"\n- *{x}*" for x in files])
+        Slack().send(
+            message=(
+                f"{len(sheets)} different samplesheets found:\n{sheets}\n\n"
+                "Uploading will continue but no downstream analysis "
+                "will be run."
+            ), run=run_id, alert=True
+        )
+
+        local_sample_sheet = None
+        halt_downstream = True
+
+    return local_sample_sheet, halt_downstream
+
+
+def check_identical_samplesheets(samplesheet_1, samplesheet_2) -> bool:
+    """
+    Check if the two samplesheets are identical
+
+    Parameters
+    ----------
+    samplesheet_1 : str
+        first samplesheet to check
+    samplesheet_2 : str
+        second samplesheet to check
+
+    Returns
+    -------
+    bool
+        True if files are identical else False
+    """
+    with open(samplesheet_1, 'rb') as fh:
+        contents_1 = fh.read()
+
+    with open(samplesheet_2, 'rb') as fh:
+        contents_2 = fh.read()
+
+    return md5(contents_1).hexdigest() == md5(contents_2).hexdigest()
+
+
 def main():
 
     args = parse_args()
@@ -529,43 +634,10 @@ def main():
         else:
             lane["runinfo_file_id"] = runInfo["id"]
 
-        # Upload samplesheet unless samplesheet-delay is specified or it is
-        # already uploaded. First find samplesheet using regex so does not
-        # have to be named exactly 'SampleSheet.csv'
-        files = os.listdir(args.run_dir)
-        files = [
-            re.search('.*sample[-_ ]?sheet.*.csv$', x, re.IGNORECASE) for x in files
-        ]
-        files = [x.group(0) for x in files if x]
-        print_stderr(f"Found samplesheet(s): {files}")
-
-        # flag to stop downstream analysis if more than one samplesheet found
-        halt_downstream = False
-
-        # should just be one file, if none print error, if more than one print
-        # error and select first (should never be more than one match)
-        if len(files) == 0:
-            print_stderr("No samplesheet found, continuing...")
-
-            # call the samplesheet default name even though missing, will try
-            # and upload with upload_single_file() whcih will print error and
-            # continue
-            local_sample_sheet = 'SampleSheet.csv'
-        else:
-            if len(files) > 1:
-                # more than one found, continue the upload but stop any
-                # downstream analysis since we don't know which is correct
-                halt_downstream = True
-                sheets = ' '.join([f"\n- *{x}*" for x in files])
-                Slack().send(
-                    message=(
-                        f"more than one samplesheet found:\n{sheets}\n\n"
-                        "Uploading will continue but no downstream analysis "
-                        "will be run."
-                    ), run=run_id, alert=True
-                )
-
-            local_sample_sheet = files[0]
+        local_sample_sheet, halt_downstream = find_local_samplesheet(
+            run_directory=args.run_dir,
+            run_id=run_id
+        )
 
         if not args.samplesheet_delay and not halt_downstream:
             print("Uploading samplesheet")
