@@ -15,7 +15,9 @@ from pathlib import Path
 from shutil import disk_usage
 from typing import Union
 
-from files.notify import Slack, CheckCycles, parse_samplesheet
+sys.path.append(os.path.join(os.path.dirname(__file__), "."))
+
+from notify import Slack, CheckCycles, parse_samplesheet
 
 # Uploads an Illumina run directory (HiSeq 2500, HiSeq X, NextSeq)
 # If for use with a MiSeq, users MUST change the config files to include and NOT specify the -l argument
@@ -335,6 +337,7 @@ def upload_single_file(filepath, project, folder, properties):
         )
         return None
 
+
 def run_sync_dir(lane, args, finish=False):
     # Set list of config files to include (only if lanes are specified)
     CONFIG_FILES = ["RTAConfiguration.xml", "RunInfo.xml", "RunParameters.xml",
@@ -385,6 +388,7 @@ def run_sync_dir(lane, args, finish=False):
         args.retries, invocation, args.run_dir
     )
     return output.split()
+
 
 def termination_file_exists(run_dir, novaseq):
     if not novaseq:
@@ -459,7 +463,7 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
         sheets = ' '.join([f"\n- *{x}*" for x in files])
         Slack().send(
             message=(
-                f"{len(sheets)} different samplesheets found:\n{sheets}\n\n"
+                f"{len(files)} different samplesheets found:\n{sheets}\n\n"
                 "Uploading will continue but no downstream analysis "
                 "will be run."
             ), run=run_id, alert=True
@@ -521,7 +525,7 @@ def main():
         f"({round(usage[1] / usage[0] * 100, 2)}%)"
     )
 
-    # tmp file to log if start notifcation has been sent
+    # tmp file to log if start notification has been sent
     # open and close to create file in case its the first time
     notify_log = f"{args.sequencer_id}.start_notify.log"
     notify_log = notify_log.replace('"', '').replace("'", "")
