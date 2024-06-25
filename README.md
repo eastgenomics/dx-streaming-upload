@@ -265,7 +265,16 @@ ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_tok
 
 ```
 
-A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 3 simultaneous sequencing runs being uploaded from 3 separate sequencers. One is expected to succeed (`A01295`), one should upload and send an alert due to incomplete cycles (`A01303`) and another (`A01625`) should upload and send an alert due to more than one samplesheet. To run this and start the test do the following:
+A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected. This will simulate 4 instances of dx-streaming-upload are set up to simulate 4 sequencers being monitored concurrently, with 4 different end points of behaviour:
+- A01295 -> should upload successfully and send a success notification to
+      the logs channel
+- A01303 -> send an alert due to missing cycle dirs
+- A01625 -> has 2 identical samplesheets => should upload successfully
+      and send a success notification to the logs channel
+- A01810 -> has 2 different samplesheets => should send alert about > 1
+      samplesheet and upload
+
+To run this and start the test do the following:
 
 ```
 # build the image
@@ -276,18 +285,21 @@ docker run -itd \
   -e SLACK_TOKEN="{slack_token}" \
   -e SLACK_LOG_CHANNEL="{slack_log_channel}" \
   -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \
-  dx-streaming-upload:v1.0.0
+  dx-streaming-upload
 
 # run the test script
 docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}"
 ```
 
-**Notes on Docker**
-- Image is created with a user `dx-upload' in the image for running the upload, working dir is `/home/dx-upload/`
-- A minimum of read permissions on the monitored directories and write permission on the `local_tar_directory`. Read/write permission must also be given on any bind mounted directories that may also be written to (i.e. if `local_log_directory` if this is mounted outside of the container (e.g. bound to `/var/log`))
-- If a proxy is required for uploading to DNAnexus, this will need to be set to the container environment with either the env file, or `-e/--env` argument. In addition, cron can not access the running users env variables, one way to address this is by adding the http/https proxy addresses to `/etc/envrionment`. An example command to do this is `echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment`.
-- Uploads may be run in the container as the `dx-upload` user created in the image, or as root. Dependent upon system permissions and binding of volumes, it may be required to run as root. To run as root user, omit the `--user dx-upload` from the above `docker run` command. Log files for `cron` and `monitor` from dx-streaming-upload will then be created in `/root/`.
+1ZT1aXcl4639mr52GkMjty145cFXcZVv
 
+**Notes on Docker**
+- Image is created with a user `dx-upload` in the image for running the upload, working dir is `/home/dx-upload/`
+- A minimum of read permissions on the monitored directories and write permission on the `local_tar_directory`. Read/write permission must also be given on any bind mounted directories that may also be written to (i.e. if `local_log_directory` if this is mounted outside of the container (e.g. bound to `/var/log`))
+- If a proxy is required for uploading to DNAnexus, this will need to be set to the container environment with either the env file, or `-e/--env` argument.
+  - If the image is started in detached mode then all env variables will automatically be added to `/etc/envirnoment`.If not, cron can not access the running users env variables, one way to address this is by adding the http/https proxy addresses to `/etc/envrionment`. An example command to do this is `echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment`.
+- Uploads may be run in the container as the `dx-upload` user created in the image, or as root. Dependent upon system permissions and binding of volumes, it may be required to run as root. To run as root user, omit the `--user dx-upload` from the above `docker run` command. Log files for `cron` and `monitor` from dx-streaming-upload will then be created in `/root/`.
+- Hourly backups at 59 minutes are made of the `monitor*.log` files in the user home directory to `~/monitor_log_backups`. This is due to dx-streaming-upload overwriting the file on restarting and losing debug logs. These backups are generated using [savelog](https://man.gnu.org.ua/manpage/?8+savelog) and kept on a timed rotation for 72 hours.
 
 
 License
