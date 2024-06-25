@@ -38,5 +38,6 @@ RUN chown 1005 /etc/environment
 RUN mkdir /home/dx-upload/logs
 RUN chown -R dx-upload /home/dx-upload
 
+# adding env variables to /etc/environment required for cron to access
 WORKDIR /home/dx-upload/
-CMD service cron start && /bin/bash
+CMD service cron start; printenv >> /etc/environment; /bin/bash
