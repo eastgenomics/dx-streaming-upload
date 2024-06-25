@@ -265,7 +265,7 @@ ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_tok
 
 ```
 
-A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected. This will simulate 4 instances of dx-streaming-upload are set up to simulate 4 sequencers being monitored concurrently, with 4 different end points of behaviour:
+A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected. This will simulate 4 instances of dx-streaming-upload which are set up to simulate 4 sequencers being monitored concurrently, with 4 different end points of behaviour:
 - A01295 -> should upload successfully and send a success notification to
       the logs channel
 - A01303 -> send an alert due to missing cycle dirs
