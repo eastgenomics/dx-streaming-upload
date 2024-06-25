@@ -88,10 +88,6 @@ main() {
     printf "\n\nStarting dx-streaming-upload\n\n"
     ansible-playbook /home/dx-upload/dx-streaming-upload/docker-tests/test-playbook.yml -v --extra-vars "dx_token=$2"
 
-    # # start cron
-    # printf "\nStarting cron:\n\n"
-    # service cron start
-
     # create some files with enough size (500mb each) to trigger an upload
     printf "\nCreating test files...\n\n"
     dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
