@@ -398,9 +398,8 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
     Find the samplesheet(s) in the local run data directory.
 
     The following behaviour is performed:
-        - no samplesheet found -> returns the string of default samplesheet
-            name 'SampleSheet.csv' to continue downstream behaviour
-            correctly
+        - no samplesheet found -> send error alert that samplesheet missing
+            but don't halt downstream analysis
         - 1 samplesheet found -> return name of samplesheet
         - 2 samplesheets found -> test if they have identical contents,
             if so return the first, if not send error alert and return
