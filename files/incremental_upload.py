@@ -439,7 +439,8 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
         halt_downstream = False
 
     elif len(files) == 1:
-        local_sample_sheet = 'SampleSheet.csv'
+        print(f"Found one samplesheet to use: {files[0]}")
+        local_sample_sheet = files[0]
         halt_downstream = False
 
     elif len(files) == 2 and check_identical_samplesheets(
@@ -448,7 +449,8 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
     ):
         # found 2 samplesheets, test if they are identical and we can
         # just select one to upload and associate to the sentinel record
-        local_sample_sheet = 'SampleSheet.csv'
+        print(f"Found 2 identical samplesheets, will upload {files[0]}")
+        local_sample_sheet = files[0]
         halt_downstream = False
 
     else:
