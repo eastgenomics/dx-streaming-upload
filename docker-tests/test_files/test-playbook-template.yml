@@ -34,6 +34,17 @@
         max_size: 1000
         min_interval: 60
         novaseq: True
+      - username: root
+        sequencer_id: A01810
+        local_tar_directory: /home/dx-upload/test_runs/A01810_tmp
+        local_log_directory: /var/log/dx-streaming-upload/A01810
+        exclude_patterns: Analysis
+        monitored_directories:
+          - /home/dx-upload/test_runs/A01810/
+        min_size: 250
+        max_size: 1000
+        min_interval: 60
+        novaseq: True
     mode: debug
     upload_project: $DX_PROJECT
 

@@ -53,7 +53,7 @@ main() {
     mkdir -p /home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L001/C123.1
     mkdir -p /home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L002/C166.1
     mkdir -p /home/dx-upload/test_runs/A01625/${A01625_1}/Data/Intensities/BaseCalls/L001/C318.1
-    mkdir -p /home/dx-upload/test_runs/A01625/${A01810_1}/Data/Intensities/BaseCalls/L001/C318.1
+    mkdir -p /home/dx-upload/test_runs/A01810/${A01810_1}/Data/Intensities/BaseCalls/L001/C318.1
 
 
     # create malformed and duplicate samplesheet names to test regex matching and uploading
@@ -92,25 +92,25 @@ main() {
     # printf "\nStarting cron:\n\n"
     # service cron start
 
-    # create some files with enough size (2GB each) to trigger an upload
+    # create some files with enough size (500mb each) to trigger an upload
     printf "\nCreating test files...\n\n"
     dd if=/dev/urandom of=/home/dx-upload/test_runs/A01295/${A01295_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
     dd if=/dev/urandom of=/home/dx-upload/test_runs/A01303/${A01303_1}/Data/Intensities/BaseCalls/L001/C123.1/output.dat bs=500 count=1000000
     dd if=/dev/urandom of=/home/dx-upload/test_runs/A01625/${A01625_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
-    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01625/${A01810_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
+    dd if=/dev/urandom of=/home/dx-upload/test_runs/A01810/${A01810_1}/Data/Intensities/BaseCalls/L001/C318.1/output.dat bs=500 count=1000000
 
     # create CopyComplete.txt so the runs are flagged as complete and will upload and close
     touch /home/dx-upload/test_runs/A01295/${A01295_1}/CopyComplete.txt \
           /home/dx-upload/test_runs/A01303/${A01303_1}/CopyComplete.txt \
           /home/dx-upload/test_runs/A01625/${A01625_1}/CopyComplete.txt \
-          /home/dx-upload/test_runs/A01625/${A01810_1}/CopyComplete.txt
+          /home/dx-upload/test_runs/A01810/${A01810_1}/CopyComplete.txt
 
 
-    printf "\nDone! The docker container should now be running, and uploads starting for 3 test uploads.\n\n"
+    printf "\nDone! The docker container should now be running, and uploads starting for 4 test uploads.\n\n"
     printf "\t\tA01295 should upload successfully\n"
     printf "\t\tA01303 should upload and send an alert due to incomplete run cycle dirs\n"
-    printf "\t\tA01625 should upload successfully (with 2 identical samplesheets)\n\n"
-    printf "\t\tA01810 should send alert due to 2 different samplesheets and upload"
+    printf "\t\tA01625 should upload successfully (with 2 identical samplesheets)\n"
+    printf "\t\tA01810 should send alert due to 2 different samplesheets and upload\n\n"
 }
 printf '\nStarting test script\n'
 main "$1" "$2"
