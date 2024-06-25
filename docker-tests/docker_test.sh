@@ -81,7 +81,7 @@ main() {
         > /home/dx-upload/test_runs/A01303/${A01303_1}/RunInfo.xml
     cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01625_1}\">/g" \
         > /home/dx-upload/test_runs/A01625/${A01625_1}/RunInfo.xml
-    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01810}\">/g" \
+    cat /home/dx-upload/dx-streaming-upload/docker-tests/test_files/RunInfo.xml | sed -r "s/(Id=).*/Id=\"${A01810_1}\">/g" \
         > /home/dx-upload/test_runs/A01810/${A01810_1}/RunInfo.xml
 
     # trigger Ansible
