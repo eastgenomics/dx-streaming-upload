@@ -428,6 +428,8 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
     files = [x.group(0) for x in files if x]
     print_stderr(f"Found samplesheet(s): {files}")
 
+    halt_downstream = False
+
     if len(files) == 0:
         # send an alert so we know no samplesheet has been added
         Slack().send(
@@ -436,12 +438,10 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
             ), run=run_id, alert=True
         )
         local_sample_sheet = None
-        halt_downstream = False
 
     elif len(files) == 1:
         print(f"Found one samplesheet to use: {files[0]}")
         local_sample_sheet = files[0]
-        halt_downstream = False
 
     elif len(files) == 2 and check_identical_samplesheets(
         os.path.join(run_directory, files[0]),
@@ -451,7 +451,6 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
         # just select one to upload and associate to the sentinel record
         print(f"Found 2 identical samplesheets, will upload {files[0]}")
         local_sample_sheet = files[0]
-        halt_downstream = False
 
     else:
         # more than one found and not the same file, continue the
