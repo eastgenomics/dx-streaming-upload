@@ -429,24 +429,24 @@ def find_local_samplesheet(run_directory, run_id) -> Union[str, bool]:
     files = [x.group(0) for x in files if x]
     print_stderr(f"Found samplesheet(s): {files}")
 
-    # flag to stop downstream analysis if more than one samplesheet found
-    halt_downstream = False
-
-    # check for presence of samplesheet
     if len(files) == 0:
-        print_stderr("No samplesheet found, continuing...")
-
-        # call the samplesheet default name even though missing, will try
-        # and upload with upload_single_file() which will print error and
-        # continue. Don't halt downstream analysis.
-        local_sample_sheet = 'SampleSheet.csv'
+        # send an alert so we know no samplesheet has been added
+        Slack().send(
+            message=(
+                "No samplesheet found in run directory at beginning of upload"
+            ), run=run_id, alert=True
+        )
+        local_sample_sheet = None
         halt_downstream = False
 
     elif len(files) == 1:
         local_sample_sheet = 'SampleSheet.csv'
         halt_downstream = False
 
-    elif len(files) == 2 and check_identical_samplesheets(files[0], files[1]):
+    elif len(files) == 2 and check_identical_samplesheets(
+        os.path.join(run_directory, files[0]),
+        os.path.join(run_directory, files[1])
+    ):
         # found 2 samplesheets, test if they are identical and we can
         # just select one to upload and associate to the sentinel record
         local_sample_sheet = 'SampleSheet.csv'
@@ -639,7 +639,7 @@ def main():
             run_id=run_id
         )
 
-        if not args.samplesheet_delay and not halt_downstream:
+        if not args.samplesheet_delay and local_sample_sheet and not halt_downstream:
             print("Uploading samplesheet")
             sampleSheet = dxpy.find_one_data_object(
                 zero_ok=True, name=local_sample_sheet,
@@ -713,7 +713,7 @@ def main():
             }
 
         # Upload sample sheet here, if samplesheet-delay specified
-        if args.samplesheet_delay and not halt_downstream:
+        if args.samplesheet_delay and local_sample_sheet and not halt_downstream:
             lane["samplesheet_file_id"] = upload_single_file(
                 os.path.join(args.run_dir, local_sample_sheet),
                 args.project,
@@ -797,8 +797,8 @@ def main():
         raise_error(
             (
                 f"Run has successfully uploaded but more than one samplesheet "
-                f"was found:\n{sheets}\n\n No downstream analysis will be "
-                f"run.\n\n*Upload summary*:\n"
+                f"with different contents was found.\n\n No downstream "
+                f"analysis will be run.\n\n*Upload summary*:\n"
                 f"\t\t\tTotal upload time: {total_time}\n"
                 f"\t\t\tTotal size of run: {run_size}GB\n"
                 f"\t\t\tDisk usage after upload: {usage}"
