@@ -1,0 +1,23 @@
+[Header],,,,,,
+IEMFileVersion,5,,,,,
+Investigator Name,JL,,,,,
+Experiment Name,,,,,,
+Date,19/06/2024,,,,,
+Workflow,GenerateFASTQ,,,,,
+Application,NovaSeq FASTQ Only,,,,,
+Instrument Type,NovaSeq,,,,,
+Assay,TruSeq,,,,,
+Index Adapters,96_UDI_PN101308,,,,,
+,,,,,,
+[Reads],,,,,,
+151,,,,,,
+151,,,,,,
+,,,,,,
+[Settings],,,,,,
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,
+,,,,,,
+[Data],,,,,,
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,Index_Plate_Well,index,index2
+sample_3,sample_3,961,A1,A07,ACCAATCTCG,AGTGCCGGAA
+sample_4,sample_4,961,B1,B07,GTCGTGACAC,AGCCATACAA
