@@ -291,8 +291,6 @@ docker run -itd \
 docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}"
 ```
 
-1ZT1aXcl4639mr52GkMjty145cFXcZVv
-
 **Notes on Docker**
 - Image is created with a user `dx-upload` in the image for running the upload, working dir is `/home/dx-upload/`
 - A minimum of read permissions on the monitored directories and write permission on the `local_tar_directory`. Read/write permission must also be given on any bind mounted directories that may also be written to (i.e. if `local_log_directory` if this is mounted outside of the container (e.g. bound to `/var/log`))
