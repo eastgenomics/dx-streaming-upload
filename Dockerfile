@@ -33,10 +33,15 @@ RUN chmod gu+rw /var/run
 RUN chmod gu+s /usr/sbin/cron
 RUN chown 1005 /etc/environment
 
+# add in cron entry for making hourly monitor log backups
+COPY cron/crontab /etc/cron.d/crontab
+RUN chmod 0644 /etc/cron.d/crontab
+RUN crontab /etc/cron.d/crontab
 
 # create required log dir, playbook(s) should point to here
 RUN mkdir /home/dx-upload/logs
 RUN chown -R dx-upload /home/dx-upload
 
+# adding env variables to /etc/environment required for cron to access
 WORKDIR /home/dx-upload/
-CMD service cron start && /bin/bash
+CMD service cron start; printenv >> /etc/environment; /bin/bash

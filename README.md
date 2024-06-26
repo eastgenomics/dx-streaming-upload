@@ -255,7 +255,16 @@ docker exec -it {container-id} bash -c "ansible-playbook /playbooks/dx-upload-pl
 docker exec -it {container-id} bash -c "crontab -l"
 ```
 
-A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected, this will simulate 3 simultaneous sequencing runs being uploaded from 3 separate sequencers. One is expected to succeed (`A01295`), one should upload and send an alert due to incomplete cycles (`A01303`) and another (`A01625`) should upload and send an alert due to more than one samplesheet. To run this and start the test do the following:
+A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected. This will simulate 4 instances of dx-streaming-upload which are set up to simulate 4 sequencers being monitored concurrently, with 4 different end points of behaviour:
+- A01295 -> should upload successfully and send a success notification to
+      the logs channel
+- A01303 -> send an alert due to missing cycle dirs
+- A01625 -> has 2 identical samplesheets => should upload successfully
+      and send a success notification to the logs channel
+- A01810 -> has 2 different samplesheets => should send alert about > 1
+      samplesheet and upload
+
+To run this and start the test do the following:
 
 ```
 # build the image
@@ -266,7 +275,7 @@ docker run -itd \
   -e SLACK_TOKEN="{slack_token}" \
   -e SLACK_LOG_CHANNEL="{slack_log_channel}" \
   -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \
-  dx-streaming-upload:v1.0.0
+  dx-streaming-upload
 
 # run the test script
 docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload/docker-tests/docker_test.sh {dnanexus-project-id} {dnanexus-auth-token}"
@@ -279,7 +288,6 @@ docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload
   - If the image is started in detached mode then all env variables will automatically be added to `/etc/envirnoment`.If not, cron can not access the running users env variables, one way to address this is by adding the http/https proxy addresses to `/etc/envrionment`. An example command to do this is `echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment`.
 - Uploads may be run in the container as the `dx-upload` user created in the image, or as root. Dependent upon system permissions and binding of volumes, it may be required to run as root. To run as root user, omit the `--user dx-upload` from the above `docker run` command. Log files for `cron` and `monitor` from dx-streaming-upload will then be created in `/root/`.
 - Hourly backups at 59 minutes are made of the `monitor*.log` files in the user home directory to `~/monitor_log_backups`. This is due to dx-streaming-upload overwriting the file on restarting and losing debug logs. These backups are generated using [savelog](https://man.gnu.org.ua/manpage/?8+savelog) and kept on a timed rotation for 72 hours.
-
 
 
 License
