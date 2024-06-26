@@ -297,7 +297,7 @@ docker exec -it {container-id} bash -c "bash /home/dx-upload/dx-streaming-upload
 - If a proxy is required for uploading to DNAnexus, this will need to be set to the container environment with either the env file, or `-e/--env` argument.
   - If the image is started in detached mode then all env variables will automatically be added to `/etc/envirnoment`.If not, cron can not access the running users env variables, one way to address this is by adding the http/https proxy addresses to `/etc/envrionment`. An example command to do this is `echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment`.
 - Uploads may be run in the container as the `dx-upload` user created in the image, or as root. Dependent upon system permissions and binding of volumes, it may be required to run as root. To run as root user, omit the `--user dx-upload` from the above `docker run` command. Log files for `cron` and `monitor` from dx-streaming-upload will then be created in `/root/`.
-
+- Hourly backups at 59 minutes are made of the `monitor*.log` files in the user home directory to `~/monitor_log_backups`. This is due to dx-streaming-upload overwriting the file on restarting and losing debug logs. These backups are generated using [savelog](https://man.gnu.org.ua/manpage/?8+savelog) and kept on a timed rotation for 72 hours.
 
 
 License
