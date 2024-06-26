@@ -248,21 +248,11 @@ docker run -itd \
   -e SLACK_ALERT_CHANNEL="{slack_alert_channel}" \
   dx-streaming-upload:v1.0.0
 
-# once running in the background, you can open a shell in the container
-docker exec -it {container-id} bash
+# once running in the background, start up Ansible in the detached container
+docker exec -it {container-id} bash -c "ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars 'dx_token=<SECRET_TOKEN>'"
 
-# cron doesn't have access to env variables, therefore add them to /etc/environment where it can read
-printenv | grep SLACK >> /etc/environment
-
-# add proxy to /etc/environment for cron to access if required and set as env variables
-echo "HTTP_PROXY=${HTTP_PROXY}" >> /etc/environment
-echo "HTTPS_PROXY=${HTTP_PROXY}" >> /etc/environment
-echo "http_proxy=${http_proxy}" >> /etc/environment
-echo "https_proxy=${http_proxy}" >> /etc/environment
-
-# start up Ansible in the detached container
-ansible-playbook /playbooks/dx-upload-play.yml -i inventory --extra-vars "dx_token=<SECRET_TOKEN>"
-
+# confirm crontab has been updated
+docker exec -it {container-id} bash -c "crontab -l"
 ```
 
 A test script has been written (`docker-tests/docker_test.sh`) to check dx-streaming-upload in the container works as expected. This will simulate 4 instances of dx-streaming-upload which are set up to simulate 4 sequencers being monitored concurrently, with 4 different end points of behaviour:
