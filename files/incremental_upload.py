@@ -17,7 +17,7 @@ from typing import Union
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
-from notify import Slack, CheckCycles, parse_samplesheet
+from notify import Slack, CheckCycles
 
 # Uploads an Illumina run directory (HiSeq 2500, HiSeq X, NextSeq)
 # If for use with a MiSeq, users MUST change the config files to include and NOT specify the -l argument
@@ -500,6 +500,37 @@ def check_identical_samplesheets(samplesheet_1, samplesheet_2) -> bool:
     return md5(contents_1).hexdigest() == md5(contents_2).hexdigest()
 
 
+def parse_samplesheet(run_dir, local_sample_sheet):
+    """
+    Use regex to find samplesheets in given run directory and parse out
+    experiment name
+
+    Parameters
+    ----------
+    run_dir : str
+        directory of run
+    local_sample_sheet : str
+        name of samplesheet in the local run directory
+
+    Returns : str | None
+        path to samplesheet | None if no samplesheet or > 1 samplesheets found
+    """
+    try:
+        print(f'Found samplesheet: {local_sample_sheet}')
+        with open(os.path.join(run_dir, local_sample_sheet)) as fh:
+            content = fh.read().splitlines()
+            experiment_name = [x for x in content if x.startswith('Experiment')]
+            # handle experiment name not being in 2nd column
+            experiment_name = re.sub(r',{1,}', ',', experiment_name[0])
+            experiment_name = experiment_name.split(',')[1]
+    except Exception as error:
+        # catch anything that might raise an error to not stop uploading
+        print('Error parsing experiment name from samplesheet')
+        return None
+
+    return experiment_name
+
+
 def main():
 
     args = parse_args()
@@ -530,8 +561,14 @@ def main():
     notify_log = f"{args.sequencer_id}.start_notify.log"
     notify_log = notify_log.replace('"', '').replace("'", "")
 
+    # get name of local samplesheet
+    local_sample_sheet, halt_downstream = find_local_samplesheet(
+            run_directory=args.run_dir,
+            run_id=run_id
+        )
+
     # get experiment name from samplesheet for notification
-    experiment = parse_samplesheet(args.run_dir)
+    experiment = parse_samplesheet(args.run_dir, local_sample_sheet)
 
     # build upload location url for Slack notification
     url = (
@@ -637,11 +674,6 @@ def main():
             )
         else:
             lane["runinfo_file_id"] = runInfo["id"]
-
-        local_sample_sheet, halt_downstream = find_local_samplesheet(
-            run_directory=args.run_dir,
-            run_id=run_id
-        )
 
         if not args.samplesheet_delay and local_sample_sheet and not halt_downstream:
             print("Uploading samplesheet")
