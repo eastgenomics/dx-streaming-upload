@@ -1,4 +1,4 @@
 # start of crontab
 
 # backup monitor logs every hour before they get overwritten for 72 hours
-59 * * * * /bin/bash -c 'for log in $(/bin/find ~/ -type f -name "monitor*.log"); do dir=$(sed "s/\(\/root\/monitor_\|.log\)//g" <<< $log); /usr/bin/savelog -C -c 72 -t -q -l -d -D "\%y\%m\%d_\%H\%M" -r /root/monitor_log_backups/$dir/  $log; done' > ~/cron_monitor_log_backup.log 2>&1
+59 * * * * /bin/bash -c 'for log in $(/bin/find ~/ -type f -name "monitor*.log"); do dir=$(sed "s/\(\/root\/monitor_\|.log\)//g" <<< $log); /usr/bin/savelog -C -c 72 -t -q -l -d -D "\%y\%m\%d_\%H\%M" -r /var/log/dx-streaming-upload/monitor_log_backups/$dir/  $log; done' > ~/cron_monitor_log_backup.log 2>&1
