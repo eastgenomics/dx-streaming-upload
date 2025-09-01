@@ -14,6 +14,7 @@ from math import ceil
 from pathlib import Path
 from shutil import disk_usage
 from typing import Union
+import csv
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
@@ -500,35 +501,40 @@ def check_identical_samplesheets(samplesheet_1, samplesheet_2) -> bool:
     return md5(contents_1).hexdigest() == md5(contents_2).hexdigest()
 
 
-def parse_samplesheet(run_dir, local_sample_sheet):
+def parse_samplesheet(run_dir, local_sample_sheet) -> "Optional[str]":
     """
-    Use regex to find samplesheets in given run directory and parse out
-    experiment name
+    Extract the Experiment/Experiment Name value from the given samplesheet.
+    Finds the first non-empty value in the row after the key.
 
     Parameters
     ----------
     run_dir : str
-        directory of run
+        Run directory containing the samplesheet
     local_sample_sheet : str
-        name of samplesheet in the local run directory
+        Filename of local samplesheet
 
-    Returns : str | None
-        path to samplesheet | None if no samplesheet or > 1 samplesheets found
+    Returns : str
+        Experiment name if found, else None
     """
     try:
-        print(f'Found samplesheet: {local_sample_sheet}')
-        with open(os.path.join(run_dir, local_sample_sheet)) as fh:
-            content = fh.read().splitlines()
-            experiment_name = [x for x in content if x.startswith('Experiment')]
-            # handle experiment name not being in 2nd column
-            experiment_name = re.sub(r',{1,}', ',', experiment_name[0])
-            experiment_name = experiment_name.split(',')[1]
-    except Exception as error:
-        # catch anything that might raise an error to not stop uploading
-        print('Error parsing experiment name from samplesheet')
+        with open(os.path.join(run_dir, local_sample_sheet), newline='') as fh:
+            reader = csv.reader(fh)
+            for row in reader:
+                if not row:
+                    continue
+                key = row[0].strip().strip('"').casefold()
+                if key in ("experiment", "experiment name", "experiment name:"):
+                    # Find first non-empty value in the row (skip index 0 which is the key)
+                    for value in row[1:]:
+                        value = value.strip().strip('"')
+                        if value:  # First non-empty value
+                            return value
+                    return None
+    except Exception as e:
+        # Do not fail the upload; log for observability.
+        print(f"Error parsing experiment name from samplesheet '{local_sample_sheet}': {e}")
         return None
-
-    return experiment_name
+    return None
 
 
 def main():
