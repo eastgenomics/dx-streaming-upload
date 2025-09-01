@@ -8,7 +8,6 @@ RUN apt install ansible cron rsyslog software-properties-common git nano python3
     python3-dev python3-pip sudo jq tree -y
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-RUN pip3 install --upgrade --ignore-installed -r requirements.txt
 
 # add a user to run uploads with, set permissions so both user and root
 # can run uploads as user
