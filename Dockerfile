@@ -6,8 +6,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt install ansible cron rsyslog software-properties-common git nano python3 \
     python3-dev python3-pip sudo jq tree -y
-RUN python3 -m pip install --upgrade pip
-RUN pip3 install --upgrade --ignore-installed pyyaml dxpy beautifulsoup4 lxml
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 # add a user to run uploads with, set permissions so both user and root
 # can run uploads as user
