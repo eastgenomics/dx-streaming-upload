@@ -6,6 +6,8 @@ LABEL title="dx-streaming-upload" \
 # Disable prompt during packages installation
 ARG DEBIAN_FRONTEND=noninteractive
 
+WORKDIR /root
+
 COPY . /root/dx-streaming-upload
 
 # - Update Ubuntu and install required packages
@@ -37,10 +39,9 @@ RUN sed -i '3,5s%^%#%' /root/dx-streaming-upload/tasks/main.yml
 
 RUN mkdir -p /var/log/dx-streaming-upload/monitor_log_backups
 
-# - Add in cron entry for making hourly monitor log backups (see #41)
-# - Adding env variables to /etc/environment required for cron to access
+# Add in cron entry for making hourly monitor log backups (see #41)
 COPY cron/crontab /etc/cron.d/crontab
-RUN crontab /etc/cron.d/crontab
-CMD service cron start; printenv >> /etc/environment; /bin/bash
+RUN chmod 0644 /etc/cron.d/crontab
 
-WORKDIR /root
+# Ensure cron runs, add env variables to /etc/environment - required for cron to access
+CMD service cron start; printenv >> /etc/environment; /bin/bash
