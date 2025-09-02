@@ -1,5 +1,5 @@
-pyyaml==5.4
-dxpy==0.312.0
-beautifulsoup4==4.11.1
-lxml==4.9.3
-urllib3==1.26.16
+pyyaml==6.0.2
+dxpy==0.398.0
+beautifulsoup4==4.13.5
+lxml==6.0.1
+urllib3==2.5.0
