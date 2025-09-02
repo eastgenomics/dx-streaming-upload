@@ -40,8 +40,7 @@ RUN sed -i '3,5s%^%#%' /root/dx-streaming-upload/tasks/main.yml
 RUN mkdir -p /var/log/dx-streaming-upload/monitor_log_backups
 
 # Add in cron entry for making hourly monitor log backups (see #41)
-COPY cron/crontab /etc/cron.d/crontab
-RUN chmod 0644 /etc/cron.d/crontab
+RUN crontab -u root /root/dx-streaming-upload/cron/crontab
 
 # Ensure cron runs, add env variables to /etc/environment - required for cron to access
 CMD service cron start; printenv >> /etc/environment; /bin/bash
