@@ -2,4 +2,4 @@ pyyaml==6.0.2
 dxpy==0.398.0
 beautifulsoup4==4.13.5
 lxml==6.0.1
-urllib3==2.5.0
+urllib3==2.2.3
