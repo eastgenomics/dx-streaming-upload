@@ -3,44 +3,44 @@
     monitored_users:
       - username: root
         sequencer_id: A01295
-        local_tar_directory: /home/dx-upload/test_runs/A01295_tmp
+        local_tar_directory: /root/test_runs/A01295_tmp
         local_log_directory: /var/log/dx-streaming-upload/A01295
         exclude_patterns: Analysis
         monitored_directories:
-          - /home/dx-upload/test_runs/A01295/
+          - /root/test_runs/A01295/
         min_size: 250
         max_size: 1000
         min_interval: 60
         novaseq: True
       - username: root
         sequencer_id: A01303
-        local_tar_directory: /home/dx-upload/test_runs/A01303_tmp
+        local_tar_directory: /root/test_runs/A01303_tmp
         local_log_directory: /var/log/dx-streaming-upload/A01303
         exclude_patterns: Analysis
         monitored_directories:
-          - /home/dx-upload/test_runs/A01303/
+          - /root/test_runs/A01303/
         min_size: 250
         max_size: 1000
         min_interval: 60
         novaseq: True
       - username: root
         sequencer_id: A01625
-        local_tar_directory: /home/dx-upload/test_runs/A01625_tmp
+        local_tar_directory: /root/test_runs/A01625_tmp
         local_log_directory: /var/log/dx-streaming-upload/A01625
         exclude_patterns: Analysis
         monitored_directories:
-          - /home/dx-upload/test_runs/A01625/
+          - /root/test_runs/A01625/
         min_size: 250
         max_size: 1000
         min_interval: 60
         novaseq: True
       - username: root
         sequencer_id: A01810
-        local_tar_directory: /home/dx-upload/test_runs/A01810_tmp
+        local_tar_directory: /root/test_runs/A01810_tmp
         local_log_directory: /var/log/dx-streaming-upload/A01810
         exclude_patterns: Analysis
         monitored_directories:
-          - /home/dx-upload/test_runs/A01810/
+          - /root/test_runs/A01810/
         min_size: 250
         max_size: 1000
         min_interval: 60
