@@ -67,12 +67,12 @@ class Slack():
         )
 
         http = requests.Session()
-        retries = Retry(total=5, backoff_factor=10)
-        http.mount(
-            "https://",
-            HTTPAdapter(max_retries=retries),
+        retries = Retry(
+            total=5,
+            backoff_factor=10,
             allowed_methods=frozenset({"POST"})
         )
+        http.mount("https://", HTTPAdapter(max_retries=retries))
 
         try:
             response = http.post(
