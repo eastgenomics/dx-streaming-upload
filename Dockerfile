@@ -29,9 +29,9 @@ RUN apt-get update && \
 
 # - Install required Python packages
 # - Delete cached build files
-RUN pip install -r /root/dx-streaming-upload/requirements.txt && \
-    find /usr/local/lib/python3.8  \( -iname '*.c' -o -iname '*.pxd' -o -iname '*.pyd' -o -iname '__pycache__' \) | \
-        xargs rm -rf {} && \
+RUN python3 -m pip install --no-cache-dir -r /root/dx-streaming-upload/requirements.txt && \
+    find /usr/local/lib/python3.* -type f -name '*.pyc' -delete && \
+    find /usr/local/lib/python3.* -type d -name '__pycache__' -prune -exec rm -rf {} + && \
     rm -rf /root/.cache/pip
 
 # Remove pip install requirements from Ansible tasks to allow running on air-gapped system
