@@ -93,7 +93,7 @@ The repo is structured as a standard Ansible role. The active logic lives entire
 
 The upload process is divided into three nested layers, each implemented as an independent Python script. This layering keeps concerns separate and allows each layer to be re-triggered independently if it fails.
 
-```
+```text
 Cron (every hour / every minute in debug mode)
   └─► monitor_runs.py          Layer 1 — run discovery & triage
         └─► incremental_upload.py  Layer 2 — per-run lifecycle management
@@ -466,7 +466,7 @@ the script exits.
 
 The script maintains a JSON log file that is the source of truth for what has been uploaded. Its schema:
 
-```
+```json
 {
   "sync_dir": "/path/to/run",
   "tar_destination": "project-xxx:/RUN_ID/runs",
@@ -529,7 +529,7 @@ Post-upload sanity check that catches a class of sequencer failures invisible to
 1. Reads `RunInfo.xml` and sums `NumCycles` across all reads to get the expected total cycle count.
 2. Scans `Data/Intensities/BaseCalls/L00N/` directories for cycle directories matching `C\d+\.\d`.
 3. Compares the maximum cycle directory index per lane against the expected total.
-4. If any lane is short, returns an error message; the caller uploads an alert file to DNAnexus and aborts downstream analysis.
+4. If any lane is short, it returns an error message; the caller uploads an alert file to DNAnexus and aborts downstream analysis.
 
 ## Configuration
 
@@ -633,7 +633,7 @@ The Ansible role (`tasks/main.yml`) performs the following actions in order:
 
 The cron entry wraps the entire command in `flock` to ensure only one instance runs at a time per sequencer, and redirects all output to per-sequencer log files:
 
-```
+```text
 # Every hour (deploy mode)
 @hourly flock -w 5 /var/lock/dnanexus_uploader_<SEQ_ID>.lock bash -ex -c '
   SLACK_TOKEN=$SLACK_TOKEN;
@@ -773,7 +773,7 @@ The DNAnexus Upload Agent (`ua`) binary is also required and installed separatel
 
 ## Test Suite
 
-```
+```text
 tests/
 ├── test_monitor_runs.py      # Unit tests for run classification, config parsing, DNAnexus queries
 ├── test_incremental_upload.py # Unit tests for samplesheet handling, cycle checking
